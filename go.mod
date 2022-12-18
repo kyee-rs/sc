@@ -1,4 +1,4 @@
-module github.com/joaoofreitas/0xg0.st
+module github.com/voxelin/gh0.st
 
 go 1.18
 
