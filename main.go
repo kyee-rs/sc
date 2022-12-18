@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 var port *uint64
@@ -31,7 +33,21 @@ func router(w http.ResponseWriter, r *http.Request) {
 
 // Route handling, logging and application serving
 func main() {
-	// Random seed creation
+	if _, err := os.Stat("./db/files.sqlite"); os.IsNotExist(err) {
+		// Create the database file
+		file, err := os.Create("./db/files.sqlite")
+		if err != nil {
+			panic("failed to create database file")
+		}
+		file.Close()
+	}
+	db, err := gorm.Open(sqlite.Open("./db/files.sqlite"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+	db.AutoMigrate(&Data{})
+
+	// Random seed
 	rand.Seed(time.Now().Unix())
 
 	// Home template initalization
@@ -52,5 +68,5 @@ func main() {
 
 	// Routing
 	http.HandleFunc("/", router)
-	http.ListenAndServe(fmt.Sprintf("%s:%d",*host,*port), nil)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), nil)
 }

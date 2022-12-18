@@ -1,17 +1,25 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"path"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
+
+type Data struct {
+	gorm.Model
+	Buffer []byte
+	ID     string
+	Name   string
+}
 
 // Handles and processes the home page
 func home(w http.ResponseWriter, r *http.Request) {
@@ -20,10 +28,22 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // Upload a file, save and attribute a hash
 func upload(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
+	if err := r.ParseMultipartForm(10 * 1024 * 1024); err != nil {
+		glog.Errorf("Error parsing form.")
+		glog.Errorf("Error: %s", err.Error())
+		w.WriteHeader(http.StatusRequestEntityTooLarge)
+		fmt.Fprintf(w, "413: File too large. Max size is 10MB.\n")
+		return
+	}
+	db, err := gorm.Open(sqlite.Open("./db/files.sqlite"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
 	glog.Info("Upload request recieved")
 
 	var uuid string = GenerateUUID()
-	var filepath string = fmt.Sprintf("./storage/%s/", uuid)
+	buf := bytes.NewBuffer(nil)
 
 	// Prepare to get the file
 	file, header, err := r.FormFile("file")
@@ -40,76 +60,42 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Creates directory with UUID
-	_, err = os.Stat(filepath)
-	for !os.IsNotExist(err) {
-		uuid = GenerateUUID()
-		filepath := fmt.Sprintf("./storage/%s/", uuid)
-		_, err = os.Stat(filepath)
-	}
-
-	if err := os.MkdirAll(filepath, 0777); err != nil {
-		glog.Error("Error saving file on server...")
-		glog.Errorf("Error: %s", err.Error())
-
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "No storage available.")
-		return
-	}
-
-	f, err := os.OpenFile(path.Join(filepath, header.Filename), os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		glog.Errorf("Error creating file.")
-		glog.Errorf("Error: %s", err.Error())
-
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error creating file.")
-		return
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, file); err != nil {
-		glog.Errorf("Error writing file.")
-		glog.Errorf("Error: %s", err.Error())
-
+	if _, err := io.Copy(buf, file); err != nil {
 		w.WriteHeader(http.StatusInsufficientStorage)
 		fmt.Fprintf(w, "Insufficient Storage. Error storing file.")
 		return
 	}
 
-	// All good
-	fmt.Fprintf(w, "OK, Successfully Uploaded\n http://%s/%s\n", r.Host, uuid)
+	var data Data
+	db.Where(Data{Buffer: buf.Bytes()}).Attrs(Data{ID: uuid, Name: header.Filename}).FirstOrCreate(&data)
+
+	fmt.Fprintf(w, "http://%s/%s\n", r.Host, data.ID)
 }
 
 // Gets the file using the provided UUID on the URL
 func getFile(w http.ResponseWriter, r *http.Request) {
 	glog.Info("Retrieve request received")
+	db, err := gorm.Open(sqlite.Open("./db/files.sqlite"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
 	var uuid string = strings.Replace(r.URL.Path[1:], "/", "", -1)
-	var path string = fmt.Sprintf("./storage/%s/", uuid)
 
 	glog.Infof(`Route "%s"`, r.URL.Path)
 	glog.Infof(`Retrieving UUID "%s"`, uuid)
-	glog.Infof(`Retrieving Path "%s"`, path)
 
-	files, err := ioutil.ReadDir(path)
-	if err != nil {
-		glog.Errorf(`Error walking filepath "%s"`, path)
-		glog.Errorf("Error: %s", err.Error())
+	var data Data
+	db.First(&data, "ID = ?", uuid)
+
+	if len(data.ID) <= 0 {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "File Not Found.")
+		fmt.Fprintf(w, "404: File not found.\n")
 		return
 	}
 
-	if len(files) <= 0 {
-		glog.Errorf(`No files in directory "%s"`, path)
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "File Not Found.")
-		return
-	}
-
-	var filename = files[0].Name()
+	var filename = data.Name
 	glog.Infof(`Retrieving Filename "%s"`, fmt.Sprintf("./%s", filename))
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-	http.ServeFile(w, r, fmt.Sprintf("./%s/%s", path, filename))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("filename=%s", filename))
+	http.ServeContent(w, r, filename, time.Now(), bytes.NewReader(data.Buffer))
 }
