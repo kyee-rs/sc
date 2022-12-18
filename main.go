@@ -1,9 +1,11 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
 	"fmt"
 	"html/template"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
@@ -19,6 +21,15 @@ var port *uint64
 var tmpl *template.Template
 var host *string
 
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
 // Dead simple router that just does the **perform** the job
 func router(w http.ResponseWriter, r *http.Request) {
 	switch {
@@ -33,15 +44,15 @@ func router(w http.ResponseWriter, r *http.Request) {
 
 // Route handling, logging and application serving
 func main() {
-	if _, err := os.Stat("./db/files.sqlite"); os.IsNotExist(err) {
+	if _, err := os.Stat(db_path); os.IsNotExist(err) {
 		// Create the database file
-		file, err := os.Create("./db/files.sqlite")
+		file, err := os.Create(db_path)
 		if err != nil {
 			panic("failed to create database file")
 		}
 		file.Close()
 	}
-	db, err := gorm.Open(sqlite.Open("./db/files.sqlite"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -58,7 +69,7 @@ func main() {
 	port = flag.Uint64("p", 8000, "port")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "USAGE: ./0xg0.st -p=8080 -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
+		fmt.Fprintf(os.Stderr, "USAGE: ./gh0.st -p=8080 -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -66,7 +77,29 @@ func main() {
 	flag.Parse()
 	glog.Flush()
 
-	// Routing
-	http.HandleFunc("/", router)
-	http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), nil)
+	// SSL support
+	if ssl_ {
+		glog.Infof("Serving on https://%s:%d", *host, *port)
+		glog.Fatal(http.ListenAndServeTLS(fmt.Sprintf("%s:%d", *host, *port), ssl_cert, ssl_key, nil))
+	} else {
+		glog.Infof("Serving on http://%s:%d", *host, *port)
+		glog.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), nil))
+	}
+
+	// Use gzip compression
+	if gzip_ {
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Encoding", "gzip")
+			gz, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+			if err != nil {
+				glog.Errorf("Error while compressing: %s", err)
+				return
+			}
+			defer gz.Close()
+			gzr := gzipResponseWriter{Writer: gz, ResponseWriter: w}
+			router(gzr, r)
+		})
+	} else {
+		http.HandleFunc("/", router)
+	}
 }

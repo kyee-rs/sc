@@ -28,7 +28,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // Upload a file, save and attribute a hash
 func upload(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
+	r.Body = http.MaxBytesReader(w, r.Body, size_limit)
 	if err := r.ParseMultipartForm(10 * 1024 * 1024); err != nil {
 		glog.Errorf("Error parsing form.")
 		glog.Errorf("Error: %s", err.Error())
@@ -36,7 +36,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "413: File too large. Max size is 10MB.\n")
 		return
 	}
-	db, err := gorm.Open(sqlite.Open("./db/files.sqlite"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -75,7 +75,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 // Gets the file using the provided UUID on the URL
 func getFile(w http.ResponseWriter, r *http.Request) {
 	glog.Info("Retrieve request received")
-	db, err := gorm.Open(sqlite.Open("./db/files.sqlite"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}

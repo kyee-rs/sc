@@ -1,53 +1,8 @@
-## 0x90.st
+## gh0.st
 
-HTTP POST files here:
-    `curl -F 'file=@yourfile.png' https://0xg0.st`
+### DESCRIPTION
 
-
-### Shotout
-
-This project is a simpler and minimal clone of [https://0x0.st](https://0x0.st).
-
-Big thank's to <a>Mia Herkt</a> for the initiative.
-
-This project is built totally in pure [Go](https://go.dev) only using the basic standard library.
-
-
-### Operator notes
-If you run a server and like this site, clone it! Centralization is bad.
-If you have any problem, open up an issue in GitHub.
-
-[https://github.com/joaoofreitas/0x90.st](https://github.com/joaoofreitas/0x90.st)
-
-### Usage
-
-
-` ./0xg0.st -h`
-
-```
-USAGE: ./0xg0.st -p=8080 -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]
-  -alsologtostderr
-        log to standard error as well as files
-  -log_backtrace_at value
-        when logging hits line file:N, emit a stack trace
-  -log_dir string
-        If non-empty, write log files in this directory
-  -logtostderr
-        log to standard error instead of files
-  -p uint
-        port (default 8000)
-  -stderrthreshold value
-        logs at or above this threshold go to stderr
-  -v value
-        log level for V logs
-  -vmodule value
-        comma-separated list of pattern=N settings for file-filtered logging
-```
-
-##### Example of run in server
-
-`./0x0.st -p=80 -stderrthreshold=INFO -log_dir="/path/to/log"`
-
+This service is an updated version of the original `0xg0.st`, which in turn was a fork of `0x0.st` (lmao). The original `0x0.st` was written in Python and used a MySQL database. This version is written in Go and uses a SQLite database. The original `0xg0.st` was also a bit of a mess, so I decided to rewrite it from scratch. This version does not provide storage/* folder to store files, it uses GORM with SQLite driver to save the content of the files in the database. This version also provides a file size limit of 10MB. The original `0x0.st` had a file size limit of 100MB.
 ### LICENSE
 
 ```
