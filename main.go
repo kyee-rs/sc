@@ -55,22 +55,13 @@ func loadConfig(file string) config_struct {
 	return config
 }
 
-func isBlocked(ip string, blocklist_map *os.File) bool {
-	data := make([]byte, 1024)
-	count, err := blocklist_map.Read(data)
-	if err != nil {
-		glog.Errorf("Error reading blocklist file")
-		return false
+func checkRequiredFlags(config config_struct) {
+	if len(config.Index_page_path) <= 0 || len(config.Blocklist_path) <= 0 || len(config.DB_path) <= 0 {
+		glog.Errorf("Some required flags are missing. Please check the config file.")
+		os.Exit(1)
 	}
-
-	// Check if the IP is in the blocklist
-	if strings.Contains(string(data[:count]), ip) {
-		return true
-	}
-	return false
 }
 
-// Dead simple router that just does the **perform** the job
 func router(w http.ResponseWriter, r *http.Request) {
 	config := loadConfig(*config_file)
 	file, err := os.Open(config.Blocklist_path)
@@ -79,12 +70,18 @@ func router(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	if isBlocked(r.RemoteAddr, file) {
-		glog.Errorf("Blocked IP: %s", r.RemoteAddr)
+	// Check if the IP is blocked -----------------------------------------------
+	ip, err := getIP(r)
+	if err != nil {
+		glog.Errorf("Error getting IP: %s", err)
+	}
+	if isBlocked(ip, file) || isTorExitNode(ip) {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, "403: Forbidden")
+		fmt.Fprintf(w, "403: Forbidden. Your IP (%s) has been blocked.", ip)
 		return
 	}
+	// --------------------------------------------------------------------------
+
 	switch {
 	case strings.Contains(r.Header.Get("Content-type"), "multipart/form-data"):
 		upload(w, r)
@@ -103,7 +100,7 @@ func main() {
 	config_file = flag.String("c", "ghost.config.json", "config file")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "USAGE: ./gh0.st -p=8080 -c=config.go -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
+		fmt.Fprintf(os.Stderr, "USAGE: ./gh0.st -p=8080 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -112,8 +109,14 @@ func main() {
 	glog.Flush()
 
 	config := loadConfig(*config_file)
+	checkRequiredFlags(config)
 
-	tmpl = template.Must(template.ParseFiles(config.Index_page_path))
+	parsed_tmpl, err := template.ParseFiles(config.Index_page_path)
+	if err != nil {
+		glog.Errorf("Error parsing index page template. Make sure that %s exists.", config.Index_page_path)
+		os.Exit(1)
+	}
+	tmpl = template.Must(parsed_tmpl, err)
 
 	if _, err := os.Stat(config.DB_path); os.IsNotExist(err) {
 		// Create the database file
@@ -132,29 +135,6 @@ func main() {
 	// Random seed
 	rand.Seed(time.Now().Unix())
 
-	// Load the config file
-	if _, err := os.Stat(*config_file); os.IsNotExist(err) {
-		glog.Errorf("Config file %s does not exist.", *config_file)
-		os.Exit(1)
-	}
-	file, err := os.Open(*config_file)
-	if err != nil {
-		glog.Errorf("Error opening %s", *config_file)
-		os.Exit(1)
-	}
-	defer file.Close()
-	// Read the file
-	data := make([]byte, 1024)
-	count, err := file.Read(data)
-	if err != nil && err != io.EOF {
-		glog.Errorf("Error reading %s", *config_file)
-		os.Exit(1)
-	}
-	// Check if the config file is valid
-	if !strings.Contains(string(data[:count]), "package main") {
-		glog.Errorf("Config file %s is not valid.", *config_file)
-		os.Exit(1)
-	}
 	// Gzip support
 	if config.Gzip_ {
 		glog.Info("Gzip module loaded.")
