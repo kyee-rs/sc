@@ -1,9 +1,9 @@
 <body>
-<pre>
+    <pre>
 
  THE NULL POINTER
 ==================
-      0x90.st
+      gh0.st
 
 HTTP POST files here:
     curl -F 'file=@yourfile.png' {{.}}
@@ -11,15 +11,20 @@ HTTP POST files here:
 
  SHOTOUT
 ---------
-This project is a simpler and minimal clone of <a href="https://0x0.st"l>https://0x0.st</a>.
-Big thank's to <a>Mia Herkt</a> for the initiative.
+This service is an updated version of the original <code>0xg0.st</code>`, which in turn was a fork of `0x0.st` (lmao). The original
+<code>0x0.st</code> was written in Python and used a MySQL database. This version is written in Go and uses a SQLite database. The
+original <code>0xg0.st</code> was also a bit of a mess, so I decided to rewrite it from scratch. This version does not provide
+storage/* folder to store files, it uses GORM with SQLite driver to save the content of the files in the database. This
+version also provides a file size limit control, gzip compression support, and a few other features like SSL support.
 
-This project is built totally in pure <a href="https://go.dev">Go</a> only using the basic standard library.
+Big thank's to <a href="https://github.com/joaoofreitas">joaoofreitas</a> for the initiative.
+
+This project is built totally in pure <a href="https://go.dev">Go</a> only using the basic standard library and GORM to interact with data.
 
 
  TERMS OF SERVICE
 ------------------
-0x90.st is NOT a platform for:
+gh0.st is NOT a platform for:
     * piracy
     * pornography and gore
     * extremist material of any kind
@@ -28,7 +33,7 @@ This project is built totally in pure <a href="https://go.dev">Go</a> only using
     * backups 
     * CI build artifacts
     * doxxing, database dumps containing personal information
-    * anything illegal under any law
+    * anything illegal under Ukrainian law
 
 Uploads found to be in violation of these rules will be removed,
 and the originating IP address blocked from further uploads.
@@ -42,7 +47,7 @@ Note that Tor exit nodes are blocked by the firewall due to frequent rule violat
 If you run a server and like this site, clone it! Centralization is bad.
 If you have any problem, open up an issue in GitHub.
 
-<a href="https://github.com/joaoofreitas/0x90.st">https://github.com/joaoofreitas/0x90.st</a>
+<a href="https://github.com/voxelin/gh0.st">https://github.com/voxelin/gh0.st</a>
 
 
 
