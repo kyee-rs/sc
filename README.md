@@ -2,19 +2,23 @@
 
 ### DESCRIPTION
 
-This service is an updated version of the original `0xg0.st`, which in turn was a fork of `0x0.st` (lmao). The original `0x0.st` was written in Python and used a MySQL database. This version is written in Go and uses a SQLite database. The original `0xg0.st` was also a bit of a mess, so I decided to rewrite it from scratch. This version does not provide storage/\* folder to store files, it uses GORM with SQLite driver to save the content of the files in the database. This version also provides a file size limit control, gzip compression support, and a few other features like SSL support.
+This is a simple file sharing server. It is designed to be used as a command line tool, and it is not meant to be used as a web server. This is the Go version of the original [0x0.st](https://0x0.st) server. This project also includes a few more features, such as configurable blocklists, TOR exit nodes blocking, native gzip compression, native SSL support, and a few more. For more information, see the [original project](https://git.0x0.st/mia/0x0). This project is licensed under the CC0 1.0 Universal license. See the [LICENSE](/LICENSE) file for more information.
 
 ### CONFIGURATION
 
-The configuration file is located in `config.go`. The file is self-explanatory, but here's a quick overview:
+Configuration is done through a JSON file. The default location is `config.json` in the current directory, but you can specify a different location with the `-c` flag. The configuration file is structured as follows:
 
-```go
-var size_limit int64 = 10 * 1024 * 1024 // 10MB file size limit
-var db_path string = "./db/files.sqlite" // SQLite database path
-var ssl_ bool = false // SSL support
-var ssl_cert string = "./cert.pem" // SSL certificate path
-var ssl_key string = "./key.pem" // SSL key path
-var gzip_ bool = false // gzip compression support
+```json
+{
+    "size_limit": 10,
+    "db_path": "./ghost.files.sqlite",
+    "blocklist_path": "./ghost.blocklist.txt",
+    "index_page_path": "./ghost.index.html",
+    "ssl_": false,
+    "ssl_cert": "./cert.pem",
+    "ssl_key": "./key.pem",
+    "gzip_": true
+}
 ```
 
 ### LICENSE
