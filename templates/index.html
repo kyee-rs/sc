@@ -11,16 +11,13 @@ HTTP POST files here:
 
  SHOTOUT
 ---------
-This service is an updated version of the original <code>0xg0.st</code>`, which in turn was a fork of `0x0.st` (lmao). The original
-<code>0x0.st</code> was written in Python and used a MySQL database. This version is written in Go and uses a SQLite database. The
-original <code>0xg0.st</code> was also a bit of a mess, so I decided to rewrite it from scratch. This version does not provide
-storage/* folder to store files, it uses GORM with SQLite driver to save the content of the files in the database. This
-version also provides a file size limit control, gzip compression support, and a few other features like SSL support.
+This is a simple file sharing server. It is designed to be used as a command line tool, and it is not meant to be used
+as a web server. This is the Go version of the original <a href="https://0x0.st">0x0.st</a> server. This project also includes a
+few more features, such as configurable blocklists, TOR exit nodes blocking, native gzip compression, native SSL
+support, and a few more. For more information, see the <a href="https://git.0x0.st/mia/0x0">original project</a>. This project is
+licensed under the CC0 1.0 Universal license. See the <a href="https://github.com/voxelin/gh0.st/blob/master/LICENSE">LICENSE</a> file for more information.
 
-Big thank's to <a href="https://github.com/joaoofreitas">joaoofreitas</a> for the initiative.
-
-This project is built totally in pure <a href="https://go.dev">Go</a> only using the basic standard library and GORM to interact with data.
-
+Big thank's to <a href="https://github.com/joaoofreitas">joaoofreitas</a> for the idea.
 
  TERMS OF SERVICE
 ------------------

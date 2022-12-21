@@ -28,4 +28,4 @@ Creative Commons Legal Code
 CC0 1.0 Universal
 ```
 
-This software was made by [joaoofreitas](https://github.com/joaoofreitas) and advanced by 🇺🇦 [voxelin](https://github.com/voxelin)
+Thanks to [joaoofreitas](https://github.com/joaoofreitas) for idea. Made and advanced by 🇺🇦 [voxelin](https://github.com/voxelin)

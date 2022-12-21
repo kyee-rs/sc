@@ -30,11 +30,11 @@ func home(w http.ResponseWriter, r *http.Request) {
 func upload(w http.ResponseWriter, r *http.Request) {
 	config := loadConfig(*config_file)
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.Size_limit)*1024*1024)
-	if err := r.ParseMultipartForm(10 * 1024 * 1024); err != nil {
+	if err := r.ParseMultipartForm(int64(config.Size_limit) * 1024 * 1024); err != nil {
 		glog.Errorf("Error parsing form.")
 		glog.Errorf("Error: %s", err.Error())
 		w.WriteHeader(http.StatusRequestEntityTooLarge)
-		fmt.Fprintf(w, "413: File too large. Max size is 10MB.\n")
+		fmt.Fprintf(w, "413: File too large. Max size is 10MB.")
 		return
 	}
 	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{})
@@ -47,30 +47,29 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	buf := bytes.NewBuffer(nil)
 
 	// Prepare to get the file
-	file, header, err := r.FormFile("file")
-	defer func() {
-		file.Close()
-		glog.Infof(`File "%s" closed.`, header.Filename)
-	}()
-	if err != nil {
-		glog.Errorf("Error retrieving file.")
+	if file, header, err := r.FormFile("file"); err != nil {
+		glog.Errorf("Error uploading file.")
 		glog.Errorf("Error: %s", err.Error())
-
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Bad request. Error retrieving file.")
+		fmt.Fprintf(w, "400: Bad request.")
 		return
+	} else {
+		defer func() {
+			file.Close()
+			glog.Infof(`File "%s" closed.`, header.Filename)
+		}()
+
+		if _, err := io.Copy(buf, file); err != nil {
+			w.WriteHeader(http.StatusInsufficientStorage)
+			fmt.Fprintf(w, "Insufficient Storage. Error storing file.")
+			return
+		}
+
+		var data Data
+		db.Where(Data{Buffer: buf.Bytes()}).Attrs(Data{ID: uuid, Name: header.Filename}).FirstOrCreate(&data)
+
+		fmt.Fprintf(w, "http://%s/%s\n", r.Host, data.ID)
 	}
-
-	if _, err := io.Copy(buf, file); err != nil {
-		w.WriteHeader(http.StatusInsufficientStorage)
-		fmt.Fprintf(w, "Insufficient Storage. Error storing file.")
-		return
-	}
-
-	var data Data
-	db.Where(Data{Buffer: buf.Bytes()}).Attrs(Data{ID: uuid, Name: header.Filename}).FirstOrCreate(&data)
-
-	fmt.Fprintf(w, "http://%s/%s\n", r.Host, data.ID)
 }
 
 // Gets the file using the provided UUID on the URL
