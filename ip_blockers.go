@@ -20,7 +20,6 @@ func isTorExitNode(address string) bool {
 		glog.Warningf("%s is a Tor exit node. Acess denied.", address)
 		return true
 	}
-	glog.Infof("%s is not a Tor exit node. Access granted.", address)
 	return false
 }
 
