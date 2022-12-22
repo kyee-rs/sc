@@ -1,5 +1,7 @@
 ## gh0.st
 
+## Current instance: [https://gofile.pp.ua/](https://gofile.pp.ua)
+
 ### DESCRIPTION
 
 This is a simple file sharing server. It is designed to be used as a command line tool, and it is not meant to be used as a web server. This is the Go version of the original [0x0.st](https://0x0.st) server. This project also includes a few more features, such as configurable blocklists, TOR exit nodes blocking, native gzip compression, native SSL support, and a few more. For more information, see the [original project](https://git.0x0.st/mia/0x0). This project is licensed under the CC0 1.0 Universal license. See the [LICENSE](/LICENSE) file for more information.
