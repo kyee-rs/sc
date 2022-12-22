@@ -34,7 +34,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		glog.Errorf("Error parsing form.")
 		glog.Errorf("Error: %s", err.Error())
 		w.WriteHeader(http.StatusRequestEntityTooLarge)
-		fmt.Fprintf(w, "413: File too large. Max size is 10MB.")
+		fmt.Fprintf(w, "413: File too large. Max size is %sMB.", fmt.Sprint(config.Size_limit))
 		return
 	}
 	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{})
