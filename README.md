@@ -1,6 +1,6 @@
 ## gh0.st
 
-## Current instance: [https://gofile.pp.ua/](https://gofile.pp.ua)
+## Current instance: [https://f.ieljit.lol/](https://f.ieljit.lol/)
 
 ### DESCRIPTION
 
