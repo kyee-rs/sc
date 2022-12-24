@@ -27,7 +27,6 @@ func isBlocked(ip string, blocklist_map *os.File) bool {
 	data := make([]byte, 1024)
 	count, err := blocklist_map.Read(data)
 	if err != nil {
-		glog.Errorf("Error reading blocklist file")
 		return false
 	}
 

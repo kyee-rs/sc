@@ -47,8 +47,16 @@ func loadConfig(file string) config_struct {
 	var config config_struct
 	jsonFile, err := os.Open(file)
 	if err != nil {
-		glog.Errorf("Error opening %s. Consider specifying the config file using -c flag.", file)
-		os.Exit(1)
+		return config_struct{
+			Size_limit:      10,
+			DB_path:         "ghost.db",
+			Blocklist_path:  "blocklist.txt",
+			Index_page_path: "index.html",
+			SSL_:            false,
+			SSL_cert:        "cert.pem",
+			SSL_key:         "key.pem",
+			Gzip_:           true,
+		}
 	}
 	bv, _ := io.ReadAll(jsonFile)
 	json.Unmarshal(bv, &config)
@@ -100,7 +108,7 @@ func main() {
 	config_file = flag.String("c", "ghost.config.json", "config file")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "USAGE: ./gh0.st -p=8080 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
+		fmt.Fprintf(os.Stderr, "USAGE: ./gh0.st -p=8000 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -111,10 +119,18 @@ func main() {
 	config := loadConfig(*config_file)
 	checkRequiredFlags(config)
 
+	if _, err := os.Stat(config.Index_page_path); os.IsNotExist(err) {
+		glog.Errorf("Index page not found. Creating a new one.")
+		file, err := os.Create(config.Index_page_path)
+		file.Write([]byte("This is a default index page."))
+		if err != nil {
+			glog.Errorf("Error creating index page.")
+		}
+		file.Close()
+	}
 	parsed_tmpl, err := template.ParseFiles(config.Index_page_path)
 	if err != nil {
-		glog.Errorf("Error parsing index page template. Make sure that %s exists.", config.Index_page_path)
-		os.Exit(1)
+		glog.Errorf("Error parsing index page template.")
 	}
 	tmpl = template.Must(parsed_tmpl, err)
 
