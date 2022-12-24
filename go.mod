@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/golang/glog v1.0.0
-	gorm.io/driver/sqlite v1.4.3
 	github.com/prophittcorey/tor v1.0.0
+	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.24.2
 )
 
