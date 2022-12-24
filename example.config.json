@@ -1,8 +1,8 @@
 {
     "size_limit": 10,
-    "db_path": "./ghost.files.sqlite",
-    "blocklist_path": "./ghost.blocklist.txt",
-    "index_page_path": "./ghost.index.html",
+    "db_path": "./data/files.sqlite",
+    "blocklist_path": "./data/blocklist.txt",
+    "index_page_path": "./templates/index.html",
     "ssl_": false,
     "ssl_cert": "./cert.pem",
     "ssl_key": "./key.pem",

@@ -49,7 +49,7 @@ func loadConfig(file string) config_struct {
 	if err != nil {
 		return config_struct{
 			Size_limit:      10,
-			DB_path:         "ghost.db",
+			DB_path:         "ghost.sqlite",
 			Blocklist_path:  "blocklist.txt",
 			Index_page_path: "index.html",
 			SSL_:            false,
@@ -105,7 +105,7 @@ func main() {
 	// Flags for the leveled logging
 	host = flag.String("h", "0.0.0.0", "Address to serve on")
 	port = flag.Uint64("p", 8000, "port")
-	config_file = flag.String("c", "ghost.config.json", "config file")
+	config_file = flag.String("c", "example.config.json", "config file")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "USAGE: ./gh0.st -p=8000 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
