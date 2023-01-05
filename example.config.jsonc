@@ -1,0 +1,14 @@
+{
+    "address": "127.0.0.1", // Use 0.0.0.0 to listen on all interfaces. Default: 127.0.0.1(localhost)
+    "port": 3000, // Port to listen on. Default: 3000
+    "size_limit": 100, // Maximum size of a file in MB. Default: 100
+    "db_path": "files.sqlite", // Path to the database file. Default: db.json
+    "blocklist_path": "blocklist.txt", // Path to the blocklist file. Default: blocklist.json
+    "index_page_path": "index.html", // Path to the index page. Default: index.html
+    "block_tor": true, // Block TOR users. Default: true
+    "fake_ssl": false, // Use this if you are using a reverse proxy with SSL enabled. There is no need to specify cert and key files. Default: false
+    "ssl_": false, // Use this to use real SSL on this executable. Default: false
+    "ssl_cert": "cert.pem", // Path to the SSL certificate. Default: cert.pem
+    "ssl_key": "key.pem", // Path to the SSL key. Default: key.pem
+    "gzip_": true // Use gzip compression. Default: true
+}

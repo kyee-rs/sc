@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/tailscale/hujson"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -66,7 +67,12 @@ func loadConfig(file string) config_struct {
 			Gzip_:           true,
 		}
 	}
-	bv, _ := io.ReadAll(jsonFile)
+	jsonc, err := io.ReadAll(jsonFile)
+	if err != nil {
+		glog.Errorf("Error reading config file: %s", err)
+		os.Exit(1)
+	}
+	bv, _ := standardizeJSON(jsonc)
 	json.Unmarshal(bv, &config)
 	return config
 }
@@ -185,4 +191,20 @@ func main() {
 		glog.Infof("HTTP server running on http://%s:%d", *host, *port)
 		glog.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), nil))
 	}
+}
+
+func standardizeJSON(b []byte) ([]byte, error) {
+
+	ast, err := hujson.Parse(b)
+
+	if err != nil {
+
+		return b, err
+
+	}
+
+	ast.Standardize()
+
+	return ast.Pack(), nil
+
 }
