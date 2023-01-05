@@ -23,7 +23,12 @@ type Data struct {
 
 // Handles and processes the home page
 func home(w http.ResponseWriter, r *http.Request) {
-	tmpl.Execute(w, template.HTML(fmt.Sprintf(`http://%s/`, r.Host)))
+	config := loadConfig(*config_file)
+	if config.Fake_SSL || config.SSL_ {
+		tmpl.Execute(w, template.HTML(fmt.Sprintf(`https://%s/`, r.Host)))
+	} else {
+		tmpl.Execute(w, template.HTML(fmt.Sprintf(`http://%s/`, r.Host)))
+	}
 }
 
 // Upload a file, save and attribute a hash
@@ -68,7 +73,11 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		var data Data
 		db.Where(Data{Buffer: buf.Bytes()}).Attrs(Data{ID: uuid, Name: header.Filename}).FirstOrCreate(&data)
 
-		fmt.Fprintf(w, "http://%s/%s\n", r.Host, data.ID)
+		if config.Fake_SSL || config.SSL_ {
+			fmt.Fprintf(w, `https://%s/%s`, r.Host, uuid)
+		} else {
+			fmt.Fprintf(w, `http://%s/%s`, r.Host, uuid)
+		}
 	}
 }
 
@@ -78,7 +87,7 @@ func getFile(w http.ResponseWriter, r *http.Request) {
 	glog.Info("Retrieve request received")
 	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		panic("Connection to database failed. Please check your configuration.")
 	}
 	var uuid string = strings.Replace(r.URL.Path[1:], "/", "", -1)
 

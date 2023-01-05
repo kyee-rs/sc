@@ -24,11 +24,15 @@ var host *string
 var config_file *string
 
 type config_struct struct {
+	Address         string `json:"address"`
+	Port            int16  `json:"port"`
 	Size_limit      int16  `json:"size_limit"`
 	DB_path         string `json:"db_path"`
 	Blocklist_path  string `json:"blocklist_path"`
 	Index_page_path string `json:"index_page_path"`
-	SSL_            bool   `json:"ssl_"`
+	Block_TOR       bool   `json:"block_tor"`
+	Fake_SSL        bool   `json:"fake_ssl"` // Use this if you are using a reverse proxy with SSL enabled. There is no need to specify cert and key files.
+	SSL_            bool   `json:"ssl_"`     // Use this to use real SSL on this executable.
 	SSL_cert        string `json:"ssl_cert"`
 	SSL_key         string `json:"ssl_key"`
 	Gzip_           bool   `json:"gzip_"`
@@ -48,13 +52,17 @@ func loadConfig(file string) config_struct {
 	jsonFile, err := os.Open(file)
 	if err != nil {
 		return config_struct{
+			Address:         "127.0.0.1",
+			Port:            3000,
 			Size_limit:      10,
-			DB_path:         "ghost.sqlite",
+			DB_path:         "files.sqlite",
 			Blocklist_path:  "blocklist.txt",
+			Block_TOR:       true,
 			Index_page_path: "index.html",
+			Fake_SSL:        true,
 			SSL_:            false,
-			SSL_cert:        "cert.pem",
-			SSL_key:         "key.pem",
+			SSL_cert:        "",
+			SSL_key:         "",
 			Gzip_:           true,
 		}
 	}
@@ -95,20 +103,20 @@ func router(w http.ResponseWriter, r *http.Request) {
 		upload(w, r)
 	case uuidMatch.MatchString(r.URL.Path):
 		getFile(w, r)
+	case r.URL.Path == "/favicon.ico":
+		return
 	default:
 		home(w, r)
 	}
 }
 
-// Route handling, logging and application serving
 func main() {
-	// Flags for the leveled logging
-	host = flag.String("h", "0.0.0.0", "Address to serve on")
-	port = flag.Uint64("p", 8000, "port")
+	host = flag.String("h", "127.0.0.1", "Address to serve on")
+	port = flag.Uint64("p", 3000, "port")
 	config_file = flag.String("c", "example.config.json", "config file")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "USAGE: ./gh0.st -p=8000 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
+		fmt.Fprintf(os.Stderr, "USAGE: ./ghost -p=3000 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -135,25 +143,20 @@ func main() {
 	tmpl = template.Must(parsed_tmpl, err)
 
 	if _, err := os.Stat(config.DB_path); os.IsNotExist(err) {
-		// Create the database file
 		file, err := os.Create(config.DB_path)
 		if err != nil {
-			panic("failed to create database file")
+			panic("Failed to create a database file! Exiting.")
 		}
 		file.Close()
 	}
 	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		panic("Connection to database failed! Exiting.")
 	}
 	db.AutoMigrate(&Data{})
-
-	// Random seed
 	rand.Seed(time.Now().Unix())
-
-	// Gzip support
 	if config.Gzip_ {
-		glog.Info("Gzip module loaded.")
+		glog.Info("GZIP Enabled.")
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Encoding", "gzip")
 			gz, err := gzip.NewWriterLevel(w, gzip.BestCompression)
@@ -168,10 +171,8 @@ func main() {
 	} else {
 		http.HandleFunc("/", router)
 	}
-
-	// SSL support
-	if config.SSL_ {
-		glog.Infof("SSL-HTTP server running on https://%s:%d", *host, *port)
+	if config.Fake_SSL || config.SSL_ {
+		glog.Infof("Secure HTTPS server running on https://%s:%d", *host, *port)
 		glog.Fatal(http.ListenAndServeTLS(fmt.Sprintf("%s:%d", *host, *port), config.SSL_cert, config.SSL_key, nil))
 	} else {
 		glog.Infof("HTTP server running on http://%s:%d", *host, *port)
