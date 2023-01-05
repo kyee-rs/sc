@@ -119,7 +119,7 @@ func router(w http.ResponseWriter, r *http.Request) {
 func main() {
 	host = flag.String("h", "127.0.0.1", "Address to serve on.")
 	port = flag.Uint64("p", 3000, "Port to listen on.")
-	config_file = flag.String("c", "example.config.jsonc", "Config file path.")
+	config_file = flag.String("c", "config.jsonc", "Config file path.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "USAGE: ./ghost -p=3000 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")

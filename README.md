@@ -14,20 +14,22 @@ This is a simple file sharing server. This is the Go version of the original [0x
 
 ### CONFIGURATION
 
-Configuration is done through a JSON file. The default location is `config.json` in the current directory, but you can specify a different location with the `-c` flag. The configuration file is structured as follows:
-
-> ⚠ Example configuration is JSONC (JSON with comments). Remove the comments before using. ⚠
+Configuration is done through a JSON file. The default location is `config.jsonc` in the current directory, but you can specify a different location with the `-c` flag. The configuration file is structured as follows:
 
 ```jsonc
 {
-    "size_limit": 10,
-    "db_path": "./ghost.files.sqlite",
-    "blocklist_path": "./ghost.blocklist.txt",
-    "index_page_path": "./ghost.index.html",
-    "ssl_": false,
-    "ssl_cert": "./cert.pem",
-    "ssl_key": "./key.pem",
-    "gzip_": true
+    "address": "127.0.0.1", // Use 0.0.0.0 to listen on all interfaces. Default: 127.0.0.1(localhost)
+    "port": 3000, // Port to listen on. Default: 3000
+    "size_limit": 100, // Maximum size of a file in MB. Default: 100
+    "db_path": "files.sqlite", // Path to the database file. Default: db.json
+    "blocklist_path": "blocklist.txt", // Path to the blocklist file. Default: blocklist.json
+    "index_page_path": "index.html", // Path to the index page. Default: index.html
+    "block_tor": true, // Block TOR users. Default: true
+    "fake_ssl": false, // Use this if you are using a reverse proxy with SSL enabled. There is no need to specify cert and key files. Default: false
+    "ssl_": false, // Use this to use real SSL on this executable. Default: false
+    "ssl_cert": "cert.pem", // Path to the SSL certificate. Default: cert.pem
+    "ssl_key": "key.pem", // Path to the SSL key. Default: key.pem
+    "gzip_": true // Use gzip compression. Default: true
 }
 ```
 
