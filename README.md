@@ -1,16 +1,24 @@
 ## gh0.st
 
-## Current instance: [https://f.ieljit.lol/](https://f.ieljit.lol/)
+## Current instance: [https://files.ieljit.lol/](https://files.ieljit.lol/)
 
 ### DESCRIPTION
 
-This is a simple file sharing server. It is designed to be used as a command line tool, and it is not meant to be used as a web server. This is the Go version of the original [0x0.st](https://0x0.st) server. This project also includes a few more features, such as configurable blocklists, TOR exit nodes blocking, native gzip compression, native SSL support, and a few more. For more information, see the [original project](https://git.0x0.st/mia/0x0). This project is licensed under the CC0 1.0 Universal license. See the [LICENSE](/LICENSE) file for more information.
+This is a simple file sharing server. This is the Go version of the original [0x0.st](https://0x0.st) server. This project also includes a few more features, such as configurable blocklists, TOR exit nodes blocking, native gzip compression, native SSL support, and a few more. For more information, see the [original project](https://git.0x0.st/mia/0x0). This project is licensed under the CC0 1.0 Universal license. See the [LICENSE](/LICENSE) file for more information.
+
+## USAGE
+
+1. Download the latest release from the [releases page](https://github.com/voxelin/gh0.st/releases/latest).
+2. Run `chmod +x ghost` to make the binary executable.
+3. Run `./ghost` to start the server on `localhost:3000`. You can also specify a configuration file with the `-c` flag.
 
 ### CONFIGURATION
 
 Configuration is done through a JSON file. The default location is `config.json` in the current directory, but you can specify a different location with the `-c` flag. The configuration file is structured as follows:
 
-```json
+> ⚠ Example configuration is JSONC (JSON with comments). Remove the comments before using. ⚠
+
+```jsonc
 {
     "size_limit": 10,
     "db_path": "./ghost.files.sqlite",

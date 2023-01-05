@@ -111,9 +111,9 @@ func router(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	host = flag.String("h", "127.0.0.1", "Address to serve on")
-	port = flag.Uint64("p", 3000, "port")
-	config_file = flag.String("c", "example.config.json", "config file")
+	host = flag.String("h", "127.0.0.1", "Address to serve on.")
+	port = flag.Uint64("p", 3000, "Port to listen on.")
+	config_file = flag.String("c", "example.config.jsonc", "Config file path.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "USAGE: ./ghost -p=3000 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
@@ -126,6 +126,11 @@ func main() {
 
 	config := loadConfig(*config_file)
 	checkRequiredFlags(config)
+
+	if config.Fake_SSL && config.SSL_ {
+		glog.Errorf("Fake SSL and Real SSL cannot be enabled at the same time.")
+		os.Exit(1)
+	}
 
 	if _, err := os.Stat(config.Index_page_path); os.IsNotExist(err) {
 		glog.Errorf("Index page not found. Creating a new one.")
@@ -145,13 +150,15 @@ func main() {
 	if _, err := os.Stat(config.DB_path); os.IsNotExist(err) {
 		file, err := os.Create(config.DB_path)
 		if err != nil {
-			panic("Failed to create a database file! Exiting.")
+			glog.Error("Failed to create a database file! Exiting.")
+			os.Exit(1)
 		}
 		file.Close()
 	}
 	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{})
 	if err != nil {
-		panic("Connection to database failed! Exiting.")
+		glog.Error("Connection to database failed! Exiting.")
+		os.Exit(1)
 	}
 	db.AutoMigrate(&Data{})
 	rand.Seed(time.Now().Unix())
