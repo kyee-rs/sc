@@ -13,15 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
+	"github.com/apex/log"
 	"github.com/tailscale/hujson"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-var port *uint64
 var tmpl *template.Template
-var host *string
 var config_file *string
 
 type config_struct struct {
@@ -47,8 +45,21 @@ type gzipResponseWriter struct {
 func (w gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
+func standardizeJSON(b []byte) ([]byte, error) {
+	ast, err := hujson.Parse(b)
+	if err != nil {
+		return b, err
+	}
+	ast.Standardize()
+	return ast.Pack(), nil
+}
 
 func loadConfig(file string) config_struct {
+	logger := log.WithFields(log.Fields{
+		"time":    time.Now(),
+		"service": "loadConfig",
+		"file":    "main.go",
+	})
 	var config config_struct
 	jsonFile, err := os.Open(file)
 	if err != nil {
@@ -69,33 +80,44 @@ func loadConfig(file string) config_struct {
 	}
 	jsonc, err := io.ReadAll(jsonFile)
 	if err != nil {
-		glog.Errorf("Error reading config file: %s", err)
+		logger.Errorf("Error reading config file: %s", err)
 		os.Exit(1)
 	}
 	bv, _ := standardizeJSON(jsonc)
 	json.Unmarshal(bv, &config)
+	defer jsonFile.Close()
 	return config
 }
 
 func checkRequiredFlags(config config_struct) {
+	logger := log.WithFields(log.Fields{
+		"time":    time.Now(),
+		"service": "checkRequiredFlags",
+		"file":    "main.go",
+	})
 	if len(config.Index_page_path) <= 0 || len(config.Blocklist_path) <= 0 || len(config.DB_path) <= 0 {
-		glog.Errorf("Some required flags are missing. Please check the config file.")
+		logger.Errorf("Some required flags are missing. Please check the config file.")
 		os.Exit(1)
 	}
 }
 
 func router(w http.ResponseWriter, r *http.Request) {
+	logger := log.WithFields(log.Fields{
+		"time":    time.Now(),
+		"service": "router",
+		"file":    "main.go",
+	})
 	config := loadConfig(*config_file)
 	file, err := os.Open(config.Blocklist_path)
 	if err != nil {
-		glog.Errorf("Error opening %s", config.Blocklist_path)
+		logger.Errorf("Error opening %s", config.Blocklist_path)
 	}
 	defer file.Close()
 
 	// Check if the IP is blocked -----------------------------------------------
 	ip, err := getIP(r)
 	if err != nil {
-		glog.Errorf("Error getting IP: %s", err)
+		logger.Errorf("Error getting IP: %s", err)
 	}
 	if isBlocked(ip, file) || isTorExitNode(ip) {
 		w.WriteHeader(http.StatusForbidden)
@@ -117,64 +139,79 @@ func router(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	host = flag.String("h", "127.0.0.1", "Address to serve on.")
-	port = flag.Uint64("p", 3000, "Port to listen on.")
+	logger := log.WithFields(log.Fields{
+		"time":    time.Now(),
+		"service": "main",
+		"file":    "main.go",
+	})
 	config_file = flag.String("c", "config.jsonc", "Config file path.")
-
+	level := flag.Uint64("level", 2, "Log level. 1 - DebugLevel 2 - InfoLevel 3 - WarnLevel 4 - ErrorLevel 5 - FatalLevel")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "USAGE: ./ghost -p=3000 -c=config.json -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]\n")
+		fmt.Fprintf(os.Stderr, "USAGE: ./ghost -c=config.jsonc -level=2\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
 	flag.Parse()
-	glog.Flush()
-
+	switch *level {
+	case 1:
+		log.SetLevel(log.DebugLevel)
+	case 2:
+		log.SetLevel(log.InfoLevel)
+	case 3:
+		log.SetLevel(log.WarnLevel)
+	case 4:
+		log.SetLevel(log.ErrorLevel)
+	case 5:
+		log.SetLevel(log.FatalLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
+	}
 	config := loadConfig(*config_file)
 	checkRequiredFlags(config)
 
 	if config.Fake_SSL && config.SSL_ {
-		glog.Errorf("Fake SSL and Real SSL cannot be enabled at the same time.")
+		logger.Errorf("Fake SSL and Real SSL cannot be enabled at the same time.")
 		os.Exit(1)
 	}
 
 	if _, err := os.Stat(config.Index_page_path); os.IsNotExist(err) {
-		glog.Errorf("Index page not found. Creating a new one.")
+		logger.Errorf("Index page not found. Creating a new one.")
 		file, err := os.Create(config.Index_page_path)
 		file.Write([]byte("This is a default index page."))
 		if err != nil {
-			glog.Errorf("Error creating index page.")
+			logger.Errorf("Error creating index page.")
 		}
 		file.Close()
 	}
 	parsed_tmpl, err := template.ParseFiles(config.Index_page_path)
 	if err != nil {
-		glog.Errorf("Error parsing index page template.")
+		logger.Errorf("Error parsing index page template.")
 	}
 	tmpl = template.Must(parsed_tmpl, err)
 
 	if _, err := os.Stat(config.DB_path); os.IsNotExist(err) {
 		file, err := os.Create(config.DB_path)
 		if err != nil {
-			glog.Error("Failed to create a database file! Exiting.")
+			logger.Error("Failed to create a database file! Exiting.")
 			os.Exit(1)
 		}
 		file.Close()
 	}
 	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{})
 	if err != nil {
-		glog.Error("Connection to database failed! Exiting.")
+		logger.Error("Connection to database failed! Exiting.")
 		os.Exit(1)
 	}
 	db.AutoMigrate(&Data{})
 	rand.Seed(time.Now().Unix())
 	if config.Gzip_ {
-		glog.Info("GZIP Enabled.")
+		logger.Info("GZIP Enabled.")
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Encoding", "gzip")
 			gz, err := gzip.NewWriterLevel(w, gzip.BestCompression)
 			if err != nil {
-				glog.Errorf("Error while compressing: %s", err)
+				logger.Errorf("Error while compressing: %s", err)
 				return
 			}
 			defer gz.Close()
@@ -184,27 +221,14 @@ func main() {
 	} else {
 		http.HandleFunc("/", router)
 	}
-	if config.Fake_SSL || config.SSL_ {
-		glog.Infof("Secure HTTPS server running on https://%s:%d", *host, *port)
-		glog.Fatal(http.ListenAndServeTLS(fmt.Sprintf("%s:%d", *host, *port), config.SSL_cert, config.SSL_key, nil))
+	if config.SSL_ {
+		logger.Infof("Secure HTTPS server running on https://%s:%d", config.Address, config.Port)
+		http.ListenAndServeTLS(fmt.Sprintf("%s:%d", config.Address, config.Port), config.SSL_cert, config.SSL_key, nil)
+	} else if config.Fake_SSL {
+		logger.Infof("Secure HTTPS server running on https://%s:%d", config.Address, config.Port)
+		http.ListenAndServe(fmt.Sprintf("%s:%d", config.Address, config.Port), nil)
 	} else {
-		glog.Infof("HTTP server running on http://%s:%d", *host, *port)
-		glog.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), nil))
+		logger.Infof("HTTP server running on http://%s:%d", config.Address, config.Port)
+		http.ListenAndServe(fmt.Sprintf("%s:%d", config.Address, config.Port), nil)
 	}
-}
-
-func standardizeJSON(b []byte) ([]byte, error) {
-
-	ast, err := hujson.Parse(b)
-
-	if err != nil {
-
-		return b, err
-
-	}
-
-	ast.Standardize()
-
-	return ast.Pack(), nil
-
 }
