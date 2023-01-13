@@ -6,17 +6,17 @@
 
 ### DESCRIPTION
 
-This is a simple file sharing server. This is the Go version of the original [0x0.st](https://0x0.st) server. This project also includes a few more features, such as configurable blocklists, TOR exit nodes blocking, native gzip compression, native SSL support, and a few more. For more information, see the [original project](https://git.0x0.st/mia/0x0). This project is licensed under the CC0 1.0 Universal license. See the [LICENSE](/LICENSE) file for more information.
+This is a powerful file-sharing server built in Go that improves upon the original 0x0.st server. It comes with a range of features, such as configurable blocklists, blocking of TOR exit nodes, native gzip compression, and native SSL support. All of these features are included under the CC0 1.0 Universal license, which can be found in the LICENSE file.
 
 ## USAGE
 
-1. Download the latest release from the [releases page](https://github.com/voxelin/gh0.st/releases/latest).
-2. Run `chmod +x ghost` to make the binary executable.
-3. Run `./ghost` to start the server on `localhost:3000`. You can also specify a configuration file with the `-c` flag.
+1. Visit the [releases page](https://github.com/voxelin/gh0.st/releases/latest) and download the latest release.
+2. Make the binary executable by running `chmod +x ghost`.
+3. Start the server on `localhost:3000` by running `./ghost`. Alternatively, you can specify a configuration file with the `-c` flag.
 
 ### CONFIGURATION
 
-Configuration is done through a JSON file. The default location is `config.jsonc` in the current directory, but you can specify a different location with the `-c` flag. The configuration file is structured as follows:
+Configuration is done through a JSON file. By default, this file is located at `config.jsonc` in the current directory, however, you can specify a different location with the `-c` flag. The structure of the configuration file is outlined below:
 
 ```jsonc
 {
@@ -42,7 +42,6 @@ Creative Commons Legal Code
 CC0 1.0 Universal
 ```
 
-Thanks to [joaoofreitas](https://github.com/joaoofreitas) for idea. Made and advanced by 🇺🇦 [voxelin](https://github.com/voxelin)
-
+Thanks to [joaoofreitas](https://github.com/joaoofreitas) for the great idea, which was further developed by 🇺🇦 [voxelin](https://github.com/voxelin).
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fvoxelin%2Fgh0.st.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fvoxelin%2Fgh0.st?ref=badge_large)
