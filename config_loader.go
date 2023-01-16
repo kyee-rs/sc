@@ -30,19 +30,19 @@ func loadConfig() Config {
 	v.SetConfigName("config")
 	// Configure environment variables
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace dashes and with underscores
-	v.SetEnvPrefix("ghost")                                      // Look for environment variables prefixed with APP_
-	v.AutomaticEnv()                                             // Look for env vars for config keys even if they are not bound (see BindEnv below)
+	v.SetEnvPrefix("ghost")                                      // Look for environment variables prefixed with GHOST_
+	v.AutomaticEnv()                                             // Look for env vars for config keys
 	v.AllowEmptyEnv(true)                                        // Consider defined environment variables with empty values
 
 	// Set default values (in case none of the above config sources define a value for a certain key)
 	v.SetDefault("host", "0.0.0.0")
-	v.SetDefault("port", "8080")
+	v.SetDefault("port", 8080)
 	v.SetDefault("size_limit", 10)
-	v.SetDefault("db_path", "ghost.db")
+	v.SetDefault("db_path", "files.db")
 	v.SetDefault("blocklist_path", "blocklist.txt")
 	v.SetDefault("index_path", "index.html")
 	v.SetDefault("block_tor", true)
-	v.SetDefault("fake_ssl", false)
+	v.SetDefault("fake_ssl", true)
 	v.SetDefault("enable_ssl", false)
 	v.SetDefault("ssl_cert", "cert.pem")
 	v.SetDefault("ssl_key", "key.pem")

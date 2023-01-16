@@ -58,7 +58,6 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	} else {
 		defer func() {
 			file.Close()
-			InfoLogger.Printf(`File "%s" closed.`, header.Filename)
 		}()
 
 		if _, err := io.Copy(buf, file); err != nil {
@@ -71,9 +70,9 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		db.Where(Data{Buffer: buf.Bytes()}).Attrs(Data{ID: uuid, Name: header.Filename}).FirstOrCreate(&data)
 
 		if config.Fake_SSL || config.SSL_ {
-			fmt.Fprintf(w, `https://%s/%s`, r.Host, uuid)
+			fmt.Fprintf(w, `https://%s/%s\n`, r.Host, uuid)
 		} else {
-			fmt.Fprintf(w, `http://%s/%s`, r.Host, uuid)
+			fmt.Fprintf(w, `http://%s/%s\n`, r.Host, uuid)
 		}
 	}
 }
