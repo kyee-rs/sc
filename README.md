@@ -1,8 +1,6 @@
 ## gh0.st
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fvoxelin%2Fgh0.st.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fvoxelin%2Fgh0.st?ref=badge_shield)
-
-## Current instance: [https://files.ieljit.lol/](https://files.ieljit.lol/)
+## Current instance: [https://files.blackvoxel.space/](https://files.blackvoxel.space/)
 
 ### DESCRIPTION
 
@@ -64,5 +62,3 @@ CC0 1.0 Universal
 ```
 
 Thanks to [joaoofreitas](https://github.com/joaoofreitas) for the great idea, which was further developed by 🇺🇦 [voxelin](https://github.com/voxelin).
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fvoxelin%2Fgh0.st.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fvoxelin%2Fgh0.st?ref=badge_large)
