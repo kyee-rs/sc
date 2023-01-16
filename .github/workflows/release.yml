@@ -16,5 +16,3 @@ jobs:
         goos: linux
         goarch: amd64
         binary_name: ghost
-        release_name: Automatic release.
-        release_tag: auto
