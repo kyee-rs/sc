@@ -16,7 +16,7 @@ func isTorExitNode(address string) bool {
 		WarningLogger.Printf("Error checking if %s is a Tor exit node: %s", address, err)
 	}
 	if res {
-		WarningLogger.Printf("%s is a Tor exit node. Acess denied.", address)
+		WarningLogger.Printf("%s is a Tor exit node. Access denied.", address)
 		return true
 	}
 	return false
