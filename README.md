@@ -1,6 +1,6 @@
 ## gh0.st
 
-## Current instance: [https://files.blackvoxel.space/](https://files.blackvoxel.space/)
+## Current instance: [https://ghost.blackvoxel.space/](https://ghost.blackvoxel.space/)
 
 ### DESCRIPTION
 
