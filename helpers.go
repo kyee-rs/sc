@@ -1,6 +1,13 @@
 package main
 
-import "math/rand"
+import (
+	"math/rand"
+	"regexp"
+)
+
+var (
+	uuidMatch *regexp.Regexp = regexp.MustCompile(`(?m)[^\/]+$`)
+)
 
 // Generate a UUID
 func GenerateUUID() string {

@@ -1,0 +1,12 @@
+host: 0.0.0.0
+port: 8080
+size_limit: 10
+db_path: files.db
+blocklist_path: blocklist.txt
+index_path: index.html
+block_tor: true
+fake_ssl: true
+enable_ssl: false
+ssl_cert: cert.pem
+ssl_key: key.pem
+enable_gzip: true
