@@ -21,4 +21,4 @@ log/*
 
 db/*
 db
-config.json
+.vscode
