@@ -7,18 +7,21 @@ import (
 )
 
 type Config struct {
-	Host           string
-	Port           int
-	Size_limit     int
-	DB_path        string
-	Blacklist_path string
-	Index_path     string
-	Block_TOR      bool
-	Fake_SSL       bool // Use this if you are using a reverse proxy with SSL enabled. There is no need to specify cert and key files.
-	SSL_           bool `mapstructure:"enable_ssl"` // Use this to use real SSL on this executable.
-	SSL_cert       string
-	SSL_key        string
-	Gzip_          bool `mapstructure:"enable_gzip"`
+	Host             string
+	Port             int
+	Size_limit       int
+	DB_path          string
+	Blacklist_path   string
+	Index_path       string
+	Block_TOR        bool
+	Block_Proxy      bool
+	Fake_SSL         bool // Use this if you are using a reverse proxy with SSL enabled. There is no need to specify cert and key files.
+	SSL_             bool `mapstructure:"enable_ssl"` // Use this to use real SSL on this executable.
+	SSL_cert         string
+	SSL_key          string
+	Gzip_            bool     `mapstructure:"enable_gzip"`
+	Allowed_IPs      []string `mapstructure:"allowed_ips"`
+	Trusted_Platform string   `mapstructure:"trusted_platform"`
 }
 
 func loadConfig() Config {
@@ -42,11 +45,13 @@ func loadConfig() Config {
 	v.SetDefault("blacklist_path", "blacklist.txt")
 	v.SetDefault("index_path", "index.html")
 	v.SetDefault("block_tor", true)
-	v.SetDefault("fake_ssl", true)
+	v.SetDefault("fake_ssl", false)
 	v.SetDefault("enable_ssl", false)
-	v.SetDefault("ssl_cert", "cert.pem")
-	v.SetDefault("ssl_key", "key.pem")
+	v.SetDefault("ssl_cert", nil)
+	v.SetDefault("ssl_key", nil)
 	v.SetDefault("enable_gzip", true)
+	v.SetDefault("trusted_platform", nil)
+	v.SetDefault("allowed_ips", nil)
 
 	// Read and parse a config file
 	// Ignore file not found errors

@@ -35,6 +35,7 @@ func init() {
 }
 
 func main() {
+	// gin.SetMode(gin.ReleaseMode)
 	defaultCheckers() // Run IF statements to check if index.html and db.sqlite3 exist
 
 	router := gin.Default()
@@ -43,6 +44,21 @@ func main() {
 		router.Use(gzip.Gzip(gzip.DefaultCompression)) // Enable GZIP if config.Gzip_ is true
 	}
 	router.Use(ipMiddleware()) // Check if client ip is in blacklist or is a Tor exit node
+	if len(config.Allowed_IPs) > 0 {
+		router.SetTrustedProxies(config.Allowed_IPs) // Set trusted proxies
+	} else {
+		router.SetTrustedProxies(nil)
+	}
+	if config.Trusted_Platform != "" {
+		switch config.Trusted_Platform {
+		case "cloudflare":
+			router.TrustedPlatform = gin.PlatformCloudflare
+		case "google":
+			router.TrustedPlatform = gin.PlatformGoogleAppEngine
+		default:
+			router.TrustedPlatform = config.Trusted_Platform
+		}
+	}
 
 	router.LoadHTMLFiles(config.Index_path) // Load index.html template
 	var scheme string

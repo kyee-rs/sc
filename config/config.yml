@@ -7,6 +7,8 @@ index_path: index.html
 block_tor: true
 fake_ssl: false
 enable_ssl: false
-ssl_cert: cert.pem
-ssl_key: key.pem
+# ssl_cert: cert.pem
+# ssl_key: key.pem
 enable_gzip: true
+# trusted_platform: ""
+# allowed_ips: []
