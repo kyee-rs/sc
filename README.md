@@ -4,7 +4,7 @@
 
 ### DESCRIPTION
 
-This is a powerful file-sharing server built in Go that improves upon the original 0x0.st server. It comes with a range of features, such as configurable blocklists, blocking of TOR exit nodes, native gzip compression, and native SSL support. All of these features are included under the CC0 1.0 Universal license, which can be found in the LICENSE file.
+This is a powerful file-sharing server built in Go that improves upon the original 0x0.st server. It comes with a range of features, such as configurable blacklists, blocking of TOR exit nodes, native gzip compression, and native SSL support. All of these features are included under the CC0 1.0 Universal license, which can be found in the LICENSE file.
 
 ## USAGE
 
@@ -27,7 +27,7 @@ host: 0.0.0.0 # or localhost (127.0.0.1)
 port: 8080
 size_limit: 10 # in MB
 db_path: files.db
-blocklist_path: blocklist.txt
+blacklist_path: blacklist.txt
 index_path: index.html
 block_tor: true # Block TOR exit nodes.
 fake_ssl: true # Fake SSL. Specify this if you're using a reverse proxy with SSL. No need to specify ssl_cert and ssl_key.
@@ -45,10 +45,10 @@ enable_gzip: true # Enable gzip compression for files.
 | `GHOST_PORT`           | Port to listen on                 | 8080          |
 | `GHOST_SIZE_LIMIT`     | Maximum file size in MB           | 10            |
 | `GHOST_DB_PATH`        | Path to the database file         | files.db      |
-| `GHOST_BLOCKLIST_PATH` | Path to the blocklist file        | blocklist.txt |
+| `GHOST_BLACKLIST_PATH` | Path to the blacklist file        | blacklist.txt |
 | `GHOST_INDEX_PATH`     | Path to the index file            | index.html    |
 | `GHOST_BLOCK_TOR`      | Block TOR exit nodes              | true          |
-| `GHOST_FAKE_SSL`       | Fake SSL                          | true          |
+| `GHOST_FAKE_SSL`       | Fake SSL                          | false         |
 | `GHOST_ENABLE_SSL`     | Real SSL                          | false         |
 | `GHOST_SSL_CERT`       | Path to the SSL certificate       | cert.pem      |
 | `GHOST_SSL_KEY`        | Path to the SSL key               | key.pem       |
@@ -62,3 +62,4 @@ CC0 1.0 Universal
 ```
 
 Thanks to [joaoofreitas](https://github.com/joaoofreitas) for the great idea, which was further developed by 🇺🇦 [voxelin](https://github.com/voxelin).
+blocklist_map

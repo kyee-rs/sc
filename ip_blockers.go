@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"net/http"
 	"os"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/prophittcorey/tor"
 )
 
@@ -22,14 +20,14 @@ func isTorExitNode(address string) bool {
 	return false
 }
 
-func isBlocked(ip string, blocklist_map *os.File) bool {
+func isBlacklisted(ip string, blacklist_map *os.File) bool {
 	data := make([]byte, 1024)
-	count, err := blocklist_map.Read(data)
+	count, err := blacklist_map.Read(data)
 	if err != nil {
 		return false
 	}
 
-	// Check if the IP is in the blocklist
+	// Check if the IP is in the blacklist
 	if strings.Contains(string(data[:count]), ip) {
 		WarningLogger.Printf("%s is in a block-list.", ip)
 		return true
@@ -37,27 +35,24 @@ func isBlocked(ip string, blocklist_map *os.File) bool {
 	return false
 }
 
-func getIP(r *http.Request) (string, error) {
-	ip := r.Header.Get("X-REAL-IP")
-	netIP := net.ParseIP(ip)
-	if netIP != nil {
-		return ip, nil
-	}
-	ips := r.Header.Get("X-FORWARDED-FOR")
-	splitIps := strings.Split(ips, ",")
-	for _, ip := range splitIps {
-		netIP := net.ParseIP(ip)
-		if netIP != nil {
-			return ip, nil
+func ipMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		if config.Block_TOR {
+			if isTorExitNode(ip) {
+				c.AbortWithStatus(403)
+				return
+			}
 		}
+		if config.Blacklist_path != "" {
+			if file, err := os.Open(config.Blacklist_path); err == nil {
+				if isBlacklisted(ip, file) {
+					c.AbortWithStatus(403)
+					return
+				}
+				defer file.Close()
+			}
+		}
+		c.Next()
 	}
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return "", err
-	}
-	netIP = net.ParseIP(ip)
-	if netIP != nil {
-		return ip, nil
-	}
-	return "", fmt.Errorf("NO VALID IP FOUND")
 }

@@ -11,7 +11,7 @@ type Config struct {
 	Port           int
 	Size_limit     int
 	DB_path        string
-	Blocklist_path string
+	Blacklist_path string
 	Index_path     string
 	Block_TOR      bool
 	Fake_SSL       bool // Use this if you are using a reverse proxy with SSL enabled. There is no need to specify cert and key files.
@@ -39,7 +39,7 @@ func loadConfig() Config {
 	v.SetDefault("port", 8080)
 	v.SetDefault("size_limit", 10)
 	v.SetDefault("db_path", "files.db")
-	v.SetDefault("blocklist_path", "blocklist.txt")
+	v.SetDefault("blacklist_path", "blacklist.txt")
 	v.SetDefault("index_path", "index.html")
 	v.SetDefault("block_tor", true)
 	v.SetDefault("fake_ssl", true)
