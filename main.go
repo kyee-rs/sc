@@ -2,27 +2,29 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 var config = loadConfig()
 
 func main() {
-	// gin.SetMode(gin.ReleaseMode)
 	defaultCheckers() // Run IF statements to check if index.html and db.sqlite3 exist
 
-	router := gin.Default()
+	router := gin.New()
 
 	if config.Gzip_ {
 		router.Use(gzip.Gzip(gzip.DefaultCompression)) // Enable GZIP if config.Gzip_ is true
 	}
 	router.Use(ipMiddleware()) // Check if client ip is in blacklist or is a Tor exit node
+	router.Use(logger.SetLogger())
+	router.Use(gin.Recovery())
+
 	if len(config.Allowed_IPs) > 0 {
 		router.SetTrustedProxies(config.Allowed_IPs) // Set trusted proxies
 	} else {
@@ -49,12 +51,11 @@ func main() {
 	}
 
 	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{
-		Logger:                                   logger.Default.LogMode(logger.Silent),
+		Logger:                                   gormlogger.Default.LogMode(gormlogger.Silent),
 		DisableForeignKeyConstraintWhenMigrating: true,
 	}) // Connect to database file and run migrations.
 	if err != nil {
-		fmt.Printf("Connection to database failed! Exiting.\n")
-		os.Exit(1)
+		panic("Connection to database failed! Exiting.\n")
 	}
 	db.AutoMigrate(&Data{})
 
@@ -85,11 +86,11 @@ func main() {
 	// Start server with TLS if config.SSL_ is true.
 	if config.SSL_ {
 		if err := router.RunTLS(fmt.Sprintf("%s:%d", config.Host, config.Port), config.SSL_cert, config.SSL_key); err != nil {
-			fmt.Printf("Error while starting server: %s\n", err)
+			fmt.Println(err)
 		}
 	} else {
 		if err := router.Run(fmt.Sprintf("%s:%d", config.Host, config.Port)); err != nil {
-			fmt.Printf("Error while starting server: %s\n", err)
+			fmt.Println(err)
 		}
 	}
 }

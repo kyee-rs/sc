@@ -12,10 +12,10 @@ import (
 func isTorExitNode(address string) bool {
 	res, err := tor.IsExitNode(address)
 	if err != nil {
-		fmt.Printf("Error checking if %s is a Tor exit node: %s\n", address, err)
+		fmt.Println(err)
+		return false
 	}
 	if res {
-		fmt.Printf("%s is a Tor exit node. Access denied.\n", address)
 		return true
 	}
 	return false
@@ -30,7 +30,6 @@ func isBlacklisted(ip string, blacklist_map *os.File) bool {
 
 	// Check if the IP is in the blacklist
 	if strings.Contains(string(data[:count]), ip) {
-		fmt.Printf("%s is in a block-list.\n", ip)
 		return true
 	}
 	return false
