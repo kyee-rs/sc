@@ -62,4 +62,3 @@ CC0 1.0 Universal
 ```
 
 Thanks to [joaoofreitas](https://github.com/joaoofreitas) for the great idea, which was further developed by 🇺🇦 [voxelin](https://github.com/voxelin).
-blocklist_map
