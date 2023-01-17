@@ -6,9 +6,11 @@ name: Build and publish the container image
       - '*'
     branches:
       - 'master'
+
 concurrency: 
   group: ${{ github.head_ref }}
   cancel-in-progress: true
+
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
