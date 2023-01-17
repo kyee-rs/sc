@@ -3,7 +3,9 @@ name: Go release
 on:
   release:
     types: [created]
-
+concurrency: 
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
 jobs:
   release-linux-amd64:
     name: release linux/amd64
