@@ -24,13 +24,11 @@ func upload(c *gin.Context, db *gorm.DB, scheme string) {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		ErrorLogger.Printf("Error while getting file: %s", err)
 		c.String(400, "400: Bad request!\n")
 		return
 	}
 
 	if file.Size > (int64(config.Size_limit) * 1024 * 1024) {
-		ErrorLogger.Printf("File size is too big!")
 		c.String(413, "413: Request entity too large!\n")
 		return
 	}
@@ -39,7 +37,6 @@ func upload(c *gin.Context, db *gorm.DB, scheme string) {
 	buffer := func() []byte {
 		f, err := file.Open()
 		if err != nil {
-			ErrorLogger.Printf("Error while opening file: %s", err)
 			return nil
 		}
 		buf := bytes.NewBuffer(nil)

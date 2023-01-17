@@ -2,37 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var config = loadConfig()
-
-var (
-	WarningLogger *log.Logger
-	InfoLogger    *log.Logger
-	ErrorLogger   *log.Logger
-)
-
-// Initialize loggers
-func init() {
-	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	InfoLogger = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-	WarningLogger = log.New(file, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
-	ErrorLogger = log.New(file, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
-	ErrorLogger.SetOutput(os.Stderr)
-	WarningLogger.SetOutput(os.Stdout)
-	InfoLogger.SetOutput(os.Stdout)
-}
 
 func main() {
 	// gin.SetMode(gin.ReleaseMode)
@@ -69,9 +48,12 @@ func main() {
 		scheme = "http"
 	}
 
-	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{}) // Connect to database file and run migrations.
+	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{
+		Logger:                                   logger.Default.LogMode(logger.Silent),
+		DisableForeignKeyConstraintWhenMigrating: true,
+	}) // Connect to database file and run migrations.
 	if err != nil {
-		ErrorLogger.Printf("Connection to database failed! Exiting.")
+		fmt.Printf("Connection to database failed! Exiting.\n")
 		os.Exit(1)
 	}
 	db.AutoMigrate(&Data{})
@@ -103,11 +85,11 @@ func main() {
 	// Start server with TLS if config.SSL_ is true.
 	if config.SSL_ {
 		if err := router.RunTLS(fmt.Sprintf("%s:%d", config.Host, config.Port), config.SSL_cert, config.SSL_key); err != nil {
-			ErrorLogger.Printf("Error while starting server: %s", err)
+			fmt.Printf("Error while starting server: %s\n", err)
 		}
 	} else {
 		if err := router.Run(fmt.Sprintf("%s:%d", config.Host, config.Port)); err != nil {
-			ErrorLogger.Printf("Error while starting server: %s", err)
+			fmt.Printf("Error while starting server: %s\n", err)
 		}
 	}
 }
