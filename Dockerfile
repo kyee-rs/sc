@@ -1,9 +1,9 @@
-FROM --platform=$BUILDPLATFORM golang:1.19-alpine AS builder
+FROM golang:1.19-alpine AS builder
+RUN apk add build-base
 WORKDIR /code
-ENV CGO_ENABLED=0
 
 ADD go.mod go.sum /code/
-RUN go mod download
+RUN go mod download -x
 
 ADD . .
 RUN go build -o /ghost .
