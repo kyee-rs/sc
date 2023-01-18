@@ -2,8 +2,9 @@ name: Build and publish the container image
 
 "on":
   push:
-    tags:
-      - '*'
+    branches:
+      - master
+      - 2-multi-platform-build-issue-panic-connection-to-database-failed-exiting
 
 concurrency: 
   group: ${{ github.ref }}
