@@ -10,5 +10,6 @@ RUN go build -o /ghost .
 
 FROM alpine
 WORKDIR /
+LABEL org.opencontainers.image.description "Ghost is a simple, fast, and reliable way to share your files."
 COPY --from=builder /ghost /usr/local/bin/
 ENTRYPOINT ["ghost"]
