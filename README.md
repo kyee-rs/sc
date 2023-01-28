@@ -4,7 +4,7 @@
 
 ### DESCRIPTION
 
-This is a powerful file-sharing server built in Go that improves upon the original 0x0.st server. It comes with a range of features, such as configurable blacklists, blocking of TOR exit nodes, native gzip compression, and native SSL support. All of these features are included under the CC0 1.0 Universal license, which can be found in the LICENSE file.
+This is an enhanced version of the original 0x0.st server constructed with the Go programming language. It has numerous features, including adjustable blacklists, blocking of TOR exit nodes, native gzip compression, and native SSL support. All of these features are covered by the CC0 1.0 Universal license, which is available in the LICENSE file.
 
 ## USAGE
 
@@ -14,13 +14,13 @@ This is a powerful file-sharing server built in Go that improves upon the origin
 
 ### CONFIGURATION
 
-Configuration is done through a YAML (`config.yml`) file in some of this directories:
+Configuration is performed via YAML (`config.yml`) files in the following directories:
 
 1. /etc/ghost/config/config.yml
 2. ./config/config.yml
 3. ./config.yml
 
-Alternatively you can specify configuration flags through the environment variables from the list: [Env](#Environment). The structure of the configuration file is outlined below:
+Alternately, you can specify configuration flags using [environment variables](#Environment). The configuration file's structure is detailed below:
 
 ```yaml
 host: 0.0.0.0 # or 127.0.0.1 (localhost)
