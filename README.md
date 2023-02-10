@@ -1,6 +1,6 @@
 ## gh0.st
 
-## Current instance: [https://ghost.blackvoxel.space/](https://ghost.blackvoxel.space/)
+## Current instance: [https://gx0.lowt.live/](https://gx0.lowt.live/)
 
 ### DESCRIPTION
 

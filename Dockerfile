@@ -3,10 +3,10 @@ RUN apk add build-base
 WORKDIR /code
 
 ADD go.mod go.sum /code/
-RUN go mod download -x
+RUN --mount=type=cache,mode=0755,target=/go/pkg/mod go mod download -x
 
 ADD . .
-RUN go build -o /ghost .
+RUN --mount=type=cache,mode=0755,target=/go/pkg/mod go build -o /ghost .
 
 FROM alpine
 WORKDIR /
