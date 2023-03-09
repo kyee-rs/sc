@@ -1,69 +1,38 @@
-## gh0.st
+# Ghost - Zero bullshit file hosting
 
-## Current instance: [https://gx0.lowt.live/](https://gx0.lowt.live/)
+Ghost is a simple and lightweight file sharing service written in Go, designed to make file sharing quick and easy without the need for any complicated setup. With Ghost, you can share files with anyone, anywhere in the world, without having to worry about file size limitations, annoying ads, or any other kind of bullshit.
 
-### DESCRIPTION
+## Features
 
-This is an enhanced version of the original 0x0.st server constructed with the Go programming language. It has numerous features, including adjustable blacklists, blocking of TOR exit nodes, native gzip compression, and native SSL support. All of these features are covered by the CC0 1.0 Universal license, which is available in the LICENSE file.
+- Zero configuration: Ghost is designed to be as easy to use as possible, with no complicated setup required.
+- Fast and lightweight: Ghost is built with Go, making it fast and efficient, even on low-end hardware.
+- Simple and intuitive: Ghost is designed to be as simple and intuitive as possible, with no complicated menus or settings.
+- Serviceless: Ghost is completely serviceless, meaning that you don't need to sign up for an account or pay any fees to use it. No external databases or services are required.
+- Open-source: Ghost is completely free and open-source, with no hidden fees or restrictions.
 
-## USAGE
+## Getting started
 
-1. Visit the [releases page](https://github.com/voxelin/gh0.st/releases/latest) and download the latest release.
-2. Make the binary executable by running `chmod +x ghost`.
-3. Start the server on `localhost:8080` by running `./ghost`.
+To get started with Ghost, simply download the latest release from the official GitHub repository, extract the files to a directory on your computer, and run the `ghost` executable. Ghost will automatically start listening for incoming file uploads on port 8080.
 
-### CONFIGURATION
-
-Configuration is performed via YAML (`config.yml`) files in the following directories:
-
-1. /etc/ghost/config/config.yml
-2. ./config/config.yml
-3. ./config.yml
-
-Alternately, you can specify configuration flags using [environment variables](#Environment). The configuration file's structure is detailed below:
-
-```yaml
-host: 0.0.0.0 # or 127.0.0.1 (localhost)
-port: 8080 # use 443 for SSL
-size_limit: 10 # in MB
-db_path: files.db # path to the database file
-blacklist_path: blacklist.txt # path to the blacklist file
-index_path: index.html # path to the index file
-block_tor: true # block TOR exit nodes
-fake_ssl: false # fake SSL
-enable_ssl: false # real SSL (requires ssl_cert and ssl_key)
-# ssl_cert: cert.pem # path to the SSL certificate
-# ssl_key: key.pem # path to the SSL key
-enable_gzip: true # enable gzip compression for files (recommended)
-# trusted_platform: "" # trusted platform to take IP from. When using other, specify the Real IP Header (e.g. X-CDN-IP)
-# allowed_ips: [] # comma-separated list of allowed reverse proxy IPs (recommended by GIN Documentation)
+Once Ghost is running, you can upload files to it by using a `curl` command like the following:
+```bash
+$ curl -F "file=@yourFile.txt" http://localhost:8080
 ```
 
-### ENVIRONMENT
+## Configuration
 
-| Variable                 | Description                                                                                                                                | Default       |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| `GHOST_HOST`             | Host to listen on                                                                                                                          | 0.0.0.0       |
-| `GHOST_PORT`             | Port to listen on                                                                                                                          | 8080          |
-| `GHOST_SIZE_LIMIT`       | Maximum file size in MB                                                                                                                    | 10            |
-| `GHOST_DB_PATH`          | Path to the database file                                                                                                                  | files.db      |
-| `GHOST_BLACKLIST_PATH`   | Path to the blacklist file                                                                                                                 | blacklist.txt |
-| `GHOST_INDEX_PATH`       | Path to the index file                                                                                                                     | index.html    |
-| `GHOST_BLOCK_TOR`        | Block TOR exit nodes                                                                                                                       | true          |
-| `GHOST_FAKE_SSL`         | Fake SSL                                                                                                                                   | false         |
-| `GHOST_ENABLE_SSL`       | Real SSL                                                                                                                                   | false         |
-| `GHOST_SSL_CERT`         | Path to the SSL certificate                                                                                                                | `nil`         |
-| `GHOST_SSL_KEY`          | Path to the SSL key                                                                                                                        | `nil`         |
-| `GHOST_ENABLE_GZIP`      | Enable gzip compression for files                                                                                                          | true          |
-| `GHOST_TRUSTED_PLATFORM` | Trusted platform to take IP from. When using other, specify the Real IP Header (e.g. `X-CDN-IP`) [cloudflare \| google \| other (specify)] | `nil`         |
-| `GHOST_ALLOWED_IPS`      | Comma-separated list of allowed reverse proxy IPs (Recommended by GIN Documentation) [e.g. `1.2.3.4,2.2.2.2`]                              | `nil`         |
-| `GIN_MODE`               | Set to `release` to disable debug mode                                                                                                     | `debug`       |
+Ghost requires no configuration by default, but you can customize its behavior by using an environment variables. The following environment variables are supported:
 
-### LICENSE
+- `GHOST_HOST`: The host that Ghost should listen on. Defaults to `0.0.0.0`.
+- `GHOST_PORT`: The port that Ghost should listen on. Defaults to `8080`.
+- `GHOST_DB_PATH`: The path to the database file that Ghost should use. Defaults to `ghost.db`.
+- `GHOST_BLOCK_TOR`: Whether or not Ghost should block Tor users. Defaults to `false`.
+- `GHOST_GZIP`: Whether or not Ghost should gzip compress responses. Defaults to `true`.
+- `GHOST_AUTOCLEANUP`: Interval (in days) at which Ghost should automatically delete expired files. Defaults to `0` (disabled).
+## Contributing
 
-```
-Creative Commons Legal Code
-CC0 1.0 Universal
-```
+Ghost is completely open-source, and contributions are always welcome! If you're interested in contributing to Ghost, check out the official GitHub repository and feel free to submit pull requests or open issues.
 
-Thanks to [joaoofreitas](https://github.com/joaoofreitas) for the great idea, which was further developed by 🇺🇦 [voxelin](https://github.com/voxelin).
+## License
+
+Ghost is released under the CC0 1.0 Universal license. See the [`LICENSE`](LICENSE) file for more information.
