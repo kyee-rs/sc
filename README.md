@@ -29,6 +29,8 @@ Ghost requires no configuration by default, but you can customize its behavior b
 - `GHOST_BLOCK_TOR`: Whether or not Ghost should block Tor users. Defaults to `false`.
 - `GHOST_GZIP`: Whether or not Ghost should gzip compress responses. Defaults to `true`.
 - `GHOST_AUTOCLEANUP`: Interval (in days) at which Ghost should automatically delete expired files. Defaults to `0` (disabled).
+- `GHOST_MAXSIZE`: Maximum file size (in megabytes) that Ghost should allow. Defaults to `0` (unlimited).
+
 ## Contributing
 
 Ghost is completely open-source, and contributions are always welcome! If you're interested in contributing to Ghost, check out the official GitHub repository and feel free to submit pull requests or open issues.

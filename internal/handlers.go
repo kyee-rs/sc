@@ -43,7 +43,7 @@ func upload(c echo.Context, db *gorm.DB) error {
     return jsonOrString(c, http.StatusBadRequest, "400: Bad request.", true)
   }
 
-  if file.Size > (10 * 1024 * 1024) {
+  if file.Size > (int64(config.MaxSize) * 1024 * 1024) {
     return jsonOrString(c, http.StatusRequestEntityTooLarge, "413: Request entity too large.", true)
   }
 

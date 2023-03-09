@@ -1,99 +1,116 @@
 package main
 
 import (
-  "fmt"
-  "log"
-  "net/http"
-  "time"
+	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+	"time"
 
-  "github.com/labstack/echo/v4"
-  "github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
-  _ "embed"
+	_ "embed"
 
-  cron "github.com/go-co-op/gocron"
-  "gorm.io/driver/sqlite"
-  "gorm.io/gorm"
-  "gorm.io/gorm/logger"
+	"github.com/fatih/color"
+	cron "github.com/go-co-op/gocron"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
+//go:embed html/index.html
+var html []byte
+
+var tmpl = template.Must(template.New("index").Parse(string(html)))
+
 var config = loadConfig()
+var banner = `
+   ________               __     _____                          
+  / ____/ /_  ____  _____/ /_   / ___/___  ______   _____  _____
+ / / __/ __ \/ __ \/ ___/ __/   \__ \/ _ \/ ___/ | / / _ \/ ___/
+/ /_/ / / / / /_/ (__  ) /_    ___/ /  __/ /   | |/ /  __/ /    
+\____/_/ /_/\____/____/\__/   /____/\___/_/    |___/\___/_/ 
+
+`
 
 // Delete files that are older than 1 week.
 func cleanup(db *gorm.DB) {
-  if config.AutoCleanUp != 0 {
-    db.Where("created_at < ?", time.Now().Add(-1*24*time.Duration(config.AutoCleanUp)*time.Hour)).Delete(&Data{})
-  } else {
-    return
-  }
+	if config.AutoCleanUp != 0 {
+		db.Where("created_at < ?", time.Now().UTC().Add(-1*24*time.Duration(config.AutoCleanUp)*time.Hour)).Delete(&Data{})
+	} else {
+		return
+	}
 }
 
 func runCronJob(db *gorm.DB) {
-  s := cron.NewScheduler(time.UTC)
-  s.Every(1).Minute().Do(cleanup, db)
-  s.StartAsync()
+	s := cron.NewScheduler(time.UTC)
+	s.Every(1).Minute().Do(cleanup, db)
+	s.StartAsync()
 }
 
 func main() {
-  db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{
-    Logger: logger.Default.LogMode(logger.Silent),
-  })
+	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 
-  if err != nil {
-    log.Fatalln("Connection to database failed! Exiting.")
-  }
+	if err != nil {
+		log.Fatalln("Connection to database failed! Exiting.")
+	}
 
-  db.AutoMigrate(&Data{})
+	db.AutoMigrate(&Data{})
 
-  defaultCheckers()
+	defaultCheckers()
 
-  runCronJob(db)
+	runCronJob(db)
 
-  e := echo.New()
+	e := echo.New()
 
-  e.Use(middleware.Gzip())
-  e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-    Format: "${method} - ${uri} - ${status} - ${latency_human}\n",
-    Output: e.Logger.Output(),
-  }))
-  e.Use(middleware.Recover())
-  e.Use(ipMiddleware())
+	e.HideBanner = true
+	color.Cyan(banner)
 
-  e.GET("/", func(c echo.Context) error {
-    return c.HTML(http.StatusOK, fmt.Sprintf(`
-<pre>
-curl -F "file=@yourFile.txt" %s
+	e.Use(middleware.Gzip())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${method} - ${uri} - ${status} - ${latency_human}\n",
+		Output: e.Logger.Output(),
+	}))
+	e.Use(middleware.Recover())
+	e.Use(ipMiddleware())
 
-WARNING: Each file gets deleted after 1 week.
-</pre>`,
-      fmt.Sprintf("%s://%s/\n", c.Scheme(), c.Request().Host)))
-  })
+	e.GET("/", func(c echo.Context) error {
+		return tmpl.Execute(c.Response(), map[string]interface{}{
+			"host":      fmt.Sprintf("%s://%s", c.Scheme(), c.Request().Host),
+			"retention": config.AutoCleanUp,
+			"tor":       config.Block_TOR,
+			"maxsize":   config.MaxSize,
+		})
+	})
 
-  e.POST("/", func(c echo.Context) error {
-    return upload(c, db)
-  })
+	e.POST("/", func(c echo.Context) error {
+		return upload(c, db)
+	})
 
-  e.GET("/favicon.ico", func(c echo.Context) error {
-    if (c.Request().Header.Get("Accept")) == "application/json" {
-      return c.JSON(http.StatusNotFound, map[string]interface{}{
-        "error":   true,
-        "status":  http.StatusNotFound,
-        "message": "404: File not found.",
-      })
-    }
+	e.GET("/favicon.ico", func(c echo.Context) error {
+		if (c.Request().Header.Get("Accept")) == "application/json" {
+			return c.JSON(http.StatusNotFound, map[string]interface{}{
+				"error":   true,
+				"status":  http.StatusNotFound,
+				"message": "404: File not found.",
+			})
+		}
 
-    return c.Blob(http.StatusOK, "image/x-icon", []byte{})
-  })
+		return c.Blob(http.StatusOK, "image/x-icon", []byte{})
+	})
 
-  e.GET("/:id", func(c echo.Context) error {
-    bytes, filename, mime := getFile(c.Param("id"), db)
-    if bytes == nil {
-      return jsonOrString(c, http.StatusNotFound, "404: File not found.", true)
-    }
+	e.GET("/:id", func(c echo.Context) error {
+		bytes, filename, mime := getFile(c.Param("id"), db)
+		if bytes == nil {
+			return jsonOrString(c, http.StatusNotFound, "404: File not found.", true)
+		}
 
-    c.Response().Header().Set("Content-Disposition", "filename="+filename)
-    return c.Blob(http.StatusOK, mime, bytes)
-  })
+		c.Response().Header().Set("Content-Disposition", "filename="+filename)
+		return c.Blob(http.StatusOK, mime, bytes)
+	})
 
-  e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", config.Host, config.Port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", config.Host, config.Port)))
 }
