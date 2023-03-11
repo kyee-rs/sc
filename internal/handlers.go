@@ -89,8 +89,8 @@ func getFile(uuid string, db *gorm.DB) ([]byte, string, string) {
 		return nil, "", ""
 	}
 
-  	uuid = strings.TrimSpace(uuid)
-	
+	uuid = strings.TrimSpace(uuid)
+
 	var data Data
 	db.Where("ID = ?", uuid).First(&data)
 
