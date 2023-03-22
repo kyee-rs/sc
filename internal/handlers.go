@@ -44,8 +44,10 @@ func upload(c echo.Context, db *gorm.DB) error {
 		return jsonOrString(c, http.StatusBadRequest, "400: Bad request.", true)
 	}
 
-	if file.Size > (int64(config.MaxSize) * 1024 * 1024) {
-		return jsonOrString(c, http.StatusRequestEntityTooLarge, "413: Request entity too large.", true)
+	if config.MaxSize > 0 {
+		if file.Size > (int64(config.MaxSize) * 1024 * 1024) {
+			return jsonOrString(c, http.StatusRequestEntityTooLarge, "413: Request entity too large.", true)
+		}
 	}
 
 	id := xid.New().String()
@@ -60,13 +62,18 @@ func upload(c echo.Context, db *gorm.DB) error {
 		}
 		return buf.Bytes()
 	}()
-
+	
+	extension := strings.Split(file.Filename, ".")
+	if len(extension) <= 1 {
+		extension = append(extension, "txt")
+	}
+	
 	data := Data{
 		ID:        id,
 		Name:      file.Filename,
 		Buffer:    buffer,
 		Size:      file.Size,
-		Mime:      mime.TypeByExtension(file.Filename),
+		Mime:      mime.TypeByExtension(fmt.Sprintf(".%s", extension[1])),
 		CreatedAt: time.Now().UTC(),
 	}
 

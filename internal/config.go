@@ -39,7 +39,7 @@ func loadConfig() Config {
 	v.SetDefault("block_tor", false)
 	v.SetDefault("gzip", true)
 	v.SetDefault("autocleanup", 0)
-  v.SetDefault("maxsize", 0)
+  	v.SetDefault("maxsize", 0)
 
 	// Read and parse a config file
 	// Ignore file not found errors

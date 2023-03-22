@@ -11,6 +11,8 @@ func defaultCheckers() {
 		if err != nil {
 			log.Fatalln("Failed to create database file")
 		}
-		file.Close()
+		if err := file.Close(); err != nil {
+			log.Fatalln("Failed to close database file")
+		}
 	}
 }

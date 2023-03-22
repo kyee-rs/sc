@@ -34,7 +34,6 @@ var banner = `
 
 `
 
-// Delete files that are older than 1 week.
 func cleanup(db *gorm.DB) {
 	if config.AutoCleanUp != 0 {
 		db.Where("created_at < ?", time.Now().UTC().Add(-1*24*time.Duration(config.AutoCleanUp)*time.Hour)).Delete(&Data{})
@@ -45,7 +44,9 @@ func cleanup(db *gorm.DB) {
 
 func runCronJob(db *gorm.DB) {
 	s := cron.NewScheduler(time.UTC)
-	s.Every(1).Minute().Do(cleanup, db)
+	if _, err := s.Every(1).Minute().Do(cleanup, db); err != nil {
+		log.Fatalln("Failed to start cron job! Exiting.")
+	}
 	s.StartAsync()
 }
 
@@ -58,7 +59,9 @@ func main() {
 		log.Fatalln("Connection to database failed! Exiting.")
 	}
 
-	db.AutoMigrate(&Data{})
+	if err := db.AutoMigrate(&Data{}); err != nil {
+		log.Fatalln("Migration failed! Exiting.")
+	}
 
 	defaultCheckers()
 
