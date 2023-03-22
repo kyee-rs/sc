@@ -114,6 +114,8 @@ func main() {
 		}
 
 		c.Response().Header().Set("Content-Disposition", "filename="+filename)
+		c.Response().Header().Set("Content-Type", mime)
+		
 		return c.Blob(http.StatusOK, mime, bytes)
 	})
 
