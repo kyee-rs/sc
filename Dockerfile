@@ -5,7 +5,7 @@ WORKDIR /code
 ADD go.mod go.sum /code/
 RUN --mount=type=cache,mode=0755,target=/go/pkg/mod go mod download -x
 
-ADD /internal/* .
+ADD internal .
 RUN --mount=type=cache,mode=0755,target=/go/pkg/mod go build -o /ghost .
 
 FROM alpine

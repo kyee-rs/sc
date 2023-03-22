@@ -81,6 +81,8 @@ func main() {
 	e.Use(ipMiddleware())
 
 	e.GET("/", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
+		
 		return tmpl.Execute(c.Response(), map[string]interface{}{
 			"host":      fmt.Sprintf("%s://%s", c.Scheme(), c.Request().Host),
 			"retention": config.AutoCleanUp,
