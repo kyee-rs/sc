@@ -73,7 +73,7 @@ func upload(c echo.Context, db *gorm.DB) error {
 		Name:      file.Filename,
 		Buffer:    buffer,
 		Size:      file.Size,
-		Mime:      mime.TypeByExtension(fmt.Sprintf(".%s", extension[1])),
+		Mime:      mime.TypeByExtension(fmt.Sprintf(".%s", strings.ToLower(extension[1]))),
 		CreatedAt: time.Now().UTC(),
 	}
 
