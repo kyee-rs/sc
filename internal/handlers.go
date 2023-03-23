@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"mime"
@@ -16,6 +17,7 @@ import (
 
 type Data struct {
 	gorm.Model
+	Hash      string
 	Buffer    []byte
 	ID        string
 	Name      string
@@ -38,7 +40,6 @@ func jsonOrString(c echo.Context, status int, message string, error bool) error 
 
 // Upload a file, save and attribute an ID to it.
 func upload(c echo.Context, db *gorm.DB) error {
-
 	file, err := c.FormFile("file")
 	if err != nil {
 		return jsonOrString(c, http.StatusBadRequest, "400: Bad request.", true)
@@ -62,16 +63,33 @@ func upload(c echo.Context, db *gorm.DB) error {
 		}
 		return buf.Bytes()
 	}()
-	
+
+	// Check if the file is already in the database by comparing the SHA256 hash
+	// of the file with the ones in the database.
+	var checkerData Data
+	db.Where("hash = ?", fmt.Sprintf("%x", sha256.Sum256(buffer))).First(&checkerData)
+	if checkerData.ID != "" {
+		if (c.Request().Header.Get("Accept")) == "application/json" {
+			return c.JSON(http.StatusOK, map[string]interface{}{
+				"status":  http.StatusOK,
+				"message": "200: File uploaded successfully.",
+				"url":     fmt.Sprintf("%s://%s/%s", c.Scheme(), c.Request().Host, checkerData.ID),
+			})
+		} else {
+			return c.String(http.StatusOK, fmt.Sprintf("%s://%s/%s\n", c.Scheme(), c.Request().Host, checkerData.ID))
+		}
+	}
+
 	extension := strings.Split(file.Filename, ".")
 	if len(extension) <= 1 {
 		extension = append(extension, "txt")
 	}
-	
+
 	data := Data{
 		ID:        id,
 		Name:      file.Filename,
 		Buffer:    buffer,
+		Hash:      fmt.Sprintf("%x", sha256.Sum256(buffer)),
 		Size:      file.Size,
 		Mime:      mime.TypeByExtension(fmt.Sprintf(".%s", strings.ToLower(extension[1]))),
 		CreatedAt: time.Now().UTC(),
