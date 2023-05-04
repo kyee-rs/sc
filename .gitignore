@@ -22,4 +22,4 @@ log/*
 bin/*
 .vscode
 .devcontainer
-files.db
+*files.db

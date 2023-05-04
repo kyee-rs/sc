@@ -35,7 +35,7 @@ func MakeError(c echo.Context, status int, message string) error {
 			"message": message,
 		})
 	} else {
-		return c.String(status, fmt.Sprintf("%x: %s\n", status, message))
+		return c.String(status, fmt.Sprintf("%d: %s\n", status, message))
 	}
 }
 
