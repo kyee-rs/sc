@@ -27,7 +27,7 @@ $ ./ghost
 
 ## Usage
 
-Ghost is designed to be as simple and easy to use as possible. It needs no additional configuration by default, but if you want to extend the [default values](#environment-variables), please, use the [configuration file](#configuration-file) or [environment variables](#environment-variables) specified below.
+Ghost is designed to be as simple and easy to use as possible. It needs no additional configuration by default, but if you want to extend the [default values](#environment-variables), please use the [configuration file](#configuration-file) or [environment variables](#environment-variables) specified below.
 
 ### Environment variables
 | Variable | Description | Default |
