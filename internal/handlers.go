@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -100,10 +101,10 @@ func upload(c echo.Context, db *gorm.DB) error {
 
 	id := generator() + ext
 	for {
-		var data Data
-		db.Where("ID = ?", id).First(&data) // check for duplicates
+		var count int64
+		err := db.Model(&Data{}).Where("id = ?", id).Count(&count).Error
 
-		if len(data.ID) <= 0 {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 
