@@ -15,6 +15,7 @@ type Config struct {
 	Gzip        bool
 	AutoCleanUp int
 	MaxSize     int
+	Language    string
 }
 
 func loadConfig() Config {
@@ -22,27 +23,29 @@ func loadConfig() Config {
 
 	// Configure file loading
 	v.AddConfigPath(".")
-	v.AddConfigPath("config")
-	v.AddConfigPath("/etc/ghost/config")
-	v.SetConfigName("config")
+	v.AddConfigPath("cfg")
+	v.AddConfigPath("ghost")
+	v.AddConfigPath("/etc/ghost/")
+	v.SetConfigName("cfg")
 
 	// Configure environment variables
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace dashes and with underscores
-	v.SetEnvPrefix("ghost")                                      // Look for environment variables prefixed with GHOST_
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace dashes and dots in env var names with underscores
+	v.SetEnvPrefix("GS")                                         // Look for environment variables prefixed with GS_
 	v.AutomaticEnv()                                             // Look for env vars for config keys
 	v.AllowEmptyEnv(false)                                       // Consider defined environment variables with empty values
 
 	// Set default values (in case none of the above config sources define a value for a certain key)
-	v.SetDefault("host", "0.0.0.0")
+	v.SetDefault("host", "127.0.0.1")
 	v.SetDefault("port", 8080)
-	v.SetDefault("db_path", "files.db")
+	v.SetDefault("db_path", "ghost_files.db")
 	v.SetDefault("block_tor", false)
 	v.SetDefault("gzip", true)
 	v.SetDefault("autocleanup", 0)
-  	v.SetDefault("maxsize", 0)
+	v.SetDefault("maxsize", 0)
+	v.SetDefault("language", "en")
 
 	// Read and parse a config file
-	// Ignore file not found errors
+	// Ignore if error is File Not Found. Any other error is fatal.
 	err := v.ReadInConfig()
 	if _, configFileNotFound := err.(viper.ConfigFileNotFoundError); err != nil && !configFileNotFound {
 		log.Fatalln(err)

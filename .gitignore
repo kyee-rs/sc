@@ -19,7 +19,7 @@ storage/*
 *.st
 log/*
 
-db/*
-db
 bin/*
 .vscode
+.devcontainer
+files.db

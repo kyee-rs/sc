@@ -5,36 +5,50 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/gabriel-vasile/mimetype"
+	"github.com/jaevor/go-nanoid"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/xid"
 	"gorm.io/gorm"
 )
 
+// Database model.
 type Data struct {
-	gorm.Model
-	Hash      string
+	ID        string `gorm:"primaryKey,uniqueIndex"`
+	Hash      string `gorm:"uniqueIndex"`
 	Buffer    []byte
-	ID        string
 	Name      string
 	Size      int64
 	Mime      string
 	CreatedAt time.Time
 }
 
-func jsonOrString(c echo.Context, status int, message string, error bool) error {
+// MakeError returns an error in JSON or plaintext depending on the Accept header.
+func MakeError(c echo.Context, status int, message string) error {
 	if (c.Request().Header.Get("Accept")) == "application/json" {
 		return c.JSON(status, map[string]interface{}{
-			"error":   error,
+			"error":   true,
 			"status":  status,
 			"message": message,
 		})
 	} else {
-		return c.String(status, message+"\n")
+		return c.String(status, fmt.Sprintf("%x: %s\n", status, message))
+	}
+}
+
+// MakeUploadedFile returns a link to the uploaded file in JSON or plaintext depending on the Accept header.
+func MakeUploadedFile(c echo.Context, id string) error {
+	if (c.Request().Header.Get("Accept")) == "application/json" {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"uploaded": true,
+			"status":   http.StatusOK,
+			"message":  fmt.Sprintf("%s://%s/%s", c.Scheme(), c.Request().Host, id),
+		})
+	} else {
+		return c.String(http.StatusOK, fmt.Sprintf("%s://%s/%s\n", c.Scheme(), c.Request().Host, id))
 	}
 }
 
@@ -42,16 +56,21 @@ func jsonOrString(c echo.Context, status int, message string, error bool) error 
 func upload(c echo.Context, db *gorm.DB) error {
 	file, err := c.FormFile("file")
 	if err != nil {
-		return jsonOrString(c, http.StatusBadRequest, "400: Bad request.", true)
+		return MakeError(c, http.StatusBadRequest, ts.HTTPErrors.BadRequest)
+	}
+
+	generator, err := nanoid.ASCII(5)
+
+	if err != nil {
+		panic(err)
 	}
 
 	if config.MaxSize > 0 {
 		if file.Size > (int64(config.MaxSize) * 1024 * 1024) {
-			return jsonOrString(c, http.StatusRequestEntityTooLarge, "413: Request entity too large.", true)
+			return MakeError(c, http.StatusRequestEntityTooLarge, ts.HTTPErrors.FileTooLarge)
 		}
 	}
 
-	id := xid.New().String()
 	buffer := func() []byte {
 		f, err := file.Open()
 		if err != nil {
@@ -66,46 +85,43 @@ func upload(c echo.Context, db *gorm.DB) error {
 
 	// Check if the file is already in the database by comparing the SHA256 hash
 	// of the file with the ones in the database.
-	var checkerData Data
-	db.Where("hash = ?", fmt.Sprintf("%x", sha256.Sum256(buffer))).First(&checkerData)
-	if checkerData.ID != "" {
-		if (c.Request().Header.Get("Accept")) == "application/json" {
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"status":  http.StatusOK,
-				"message": "200: File uploaded successfully.",
-				"url":     fmt.Sprintf("%s://%s/%s", c.Scheme(), c.Request().Host, checkerData.ID),
-			})
-		} else {
-			return c.String(http.StatusOK, fmt.Sprintf("%s://%s/%s\n", c.Scheme(), c.Request().Host, checkerData.ID))
+	var hashChecker Data
+	db.Where("hash = ?", fmt.Sprintf("%x", sha256.Sum256(buffer))).First(&hashChecker)
+	if hashChecker.ID != "" {
+		MakeUploadedFile(c, hashChecker.ID)
+	}
+
+	mimes := mimetype.Detect(buffer)
+	ext := ".bin"
+
+	if mimes.Extension() != "" {
+		ext = mimes.Extension()
+	}
+
+	id := generator() + ext
+	for {
+		var data Data
+		db.Where("ID = ?", id).First(&data) // check for duplicates
+
+		if len(data.ID) <= 0 {
+			break
 		}
-	}
 
-	extension := strings.Split(file.Filename, ".")
-	if len(extension) <= 1 {
-		extension = append(extension, "txt")
+		id = generator() + ext
 	}
-
 	data := Data{
 		ID:        id,
 		Name:      file.Filename,
 		Buffer:    buffer,
 		Hash:      fmt.Sprintf("%x", sha256.Sum256(buffer)),
 		Size:      file.Size,
-		Mime:      mime.TypeByExtension(fmt.Sprintf(".%s", strings.ToLower(extension[1]))),
+		Mime:      mimes.String(),
 		CreatedAt: time.Now().UTC(),
 	}
 
 	db.Create(&data)
 
-	if (c.Request().Header.Get("Accept")) == "application/json" {
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"status":  http.StatusOK,
-			"message": "200: File uploaded successfully.",
-			"url":     fmt.Sprintf("%s://%s/%s", c.Scheme(), c.Request().Host, id),
-		})
-	} else {
-		return c.String(http.StatusOK, fmt.Sprintf("%s://%s/%s\n", c.Scheme(), c.Request().Host, id))
-	}
+	return MakeUploadedFile(c, id)
 }
 
 // Gets the file using the provided UUID on the URL

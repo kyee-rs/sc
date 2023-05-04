@@ -20,9 +20,9 @@ import (
 )
 
 //go:embed html/index.html
-var html []byte
+var index []byte
 
-var tmpl = template.Must(template.New("index").Parse(string(html)))
+var indexTmpl = template.Must(template.New("index").Parse(string(index)))
 
 var config = loadConfig()
 var banner = `
@@ -33,6 +33,8 @@ var banner = `
 \____/_/ /_/\____/____/\__/   /____/\___/_/    |___/\___/_/ 
 
 `
+
+var ts = translation(config.Language)
 
 func cleanup(db *gorm.DB) {
 	if config.AutoCleanUp != 0 {
@@ -45,7 +47,8 @@ func cleanup(db *gorm.DB) {
 func runCronJob(db *gorm.DB) {
 	s := cron.NewScheduler(time.UTC)
 	if _, err := s.Every(1).Minute().Do(cleanup, db); err != nil {
-		log.Fatalln("Failed to start cron job! Exiting.")
+		log.Println(ts.CronJobErrors.FailedToStart)
+		log.Fatal(err)
 	}
 	s.StartAsync()
 }
@@ -56,11 +59,13 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalln("Connection to database failed! Exiting.")
+		log.Println(ts.DatabaseErrors.ConnectionFailed)
+		log.Fatal(err)
 	}
 
 	if err := db.AutoMigrate(&Data{}); err != nil {
-		log.Fatalln("Migration failed! Exiting.")
+		log.Println(ts.DatabaseErrors.MigrationFailed)
+		log.Fatal(err)
 	}
 
 	defaultCheckers()
@@ -72,18 +77,19 @@ func main() {
 	e.HideBanner = true
 	color.Cyan(banner)
 
-	e.Use(middleware.Gzip())
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${method} - ${uri} - ${status} - ${latency_human}\n",
-		Output: e.Logger.Output(),
-	}))
-	e.Use(middleware.Recover())
-	e.Use(ipMiddleware())
+	e.Use(
+		middleware.Recover(),
+		ipMiddleware(),
+		middleware.LoggerWithConfig(middleware.LoggerConfig{
+			Format: "${method} - ${uri} - ${status} - ${latency_human}\n",
+			Output: e.Logger.Output(),
+		}),
+		middleware.Gzip(),
+	)
 
 	e.GET("/", func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
-		
-		return tmpl.Execute(c.Response(), map[string]interface{}{
+		return indexTmpl.Execute(c.Response(), map[string]interface{}{
 			"host":      fmt.Sprintf("%s://%s", c.Scheme(), c.Request().Host),
 			"retention": config.AutoCleanUp,
 			"tor":       config.Block_TOR,
@@ -95,27 +101,15 @@ func main() {
 		return upload(c, db)
 	})
 
-	e.GET("/favicon.ico", func(c echo.Context) error {
-		if (c.Request().Header.Get("Accept")) == "application/json" {
-			return c.JSON(http.StatusNotFound, map[string]interface{}{
-				"error":   true,
-				"status":  http.StatusNotFound,
-				"message": "404: File not found.",
-			})
-		}
-
-		return c.Blob(http.StatusOK, "image/x-icon", []byte{})
-	})
-
 	e.GET("/:id", func(c echo.Context) error {
 		bytes, filename, mime := getFile(c.Param("id"), db)
 		if bytes == nil {
-			return jsonOrString(c, http.StatusNotFound, "404: File not found.", true)
+			return MakeError(c, http.StatusNotFound, "File not found.")
 		}
 
-		c.Response().Header().Set("Content-Disposition", "filename="+filename)
+		c.Response().Header().Set("Content-Disposition", "filename=\""+filename+"\"")
 		c.Response().Header().Set("Content-Type", mime)
-		
+
 		return c.Blob(http.StatusOK, mime, bytes)
 	})
 
