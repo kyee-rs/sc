@@ -23,3 +23,6 @@ bin/*
 .vscode
 .devcontainer
 *files.db
+
+# IDEA Files
+.idea
