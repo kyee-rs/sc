@@ -30,16 +30,16 @@ $ ./ghost
 Ghost is designed to be as simple and easy to use as possible. It needs no additional configuration by default, but if you want to extend the [default values](#environment-variables), please use the [configuration file](#configuration-file) or [environment variables](#environment-variables) specified below.
 
 ### Environment variables
-| Variable | Description | Default |
-| --- | --- | --- |
-| `GS_PORT` | The port to run Ghost on | `8080` |
-| `GS_HOST` | The host to run Ghost on | `127.0.0.1` |
-| `GS_DB_PATH` | The path to the database file | `./ghost.db` |
-| `GS_BLOCK_TOR` | Whether or not to block Tor users | `false` |
-| `GS_GZIP` | Whether or not to compress files using Gzip | `true` |
-| `GS_AUTO_CLEANUP` | The number of days to keep files for | `7` |
-| `GS_MAX_SIZE` | The maximum file size in megabytes | `100` |
-| `GS_LANGUAGE` | The language to use [available: en, uk] | `en` |
+| Variable       | Description                                 | Default            |
+|----------------|---------------------------------------------|--------------------|
+| `GS_PORT`      | The port to run Ghost on                    | `8080`             |
+| `GS_HOST`      | The host to run Ghost on                    | `127.0.0.1`        |
+| `GS_DB_PATH`   | The path to the database file               | `./ghost_files.db` |
+| `GS_BLOCK_TOR` | Whether or not to block Tor users           | `false`            |
+| `GS_GZIP`      | Whether or not to compress files using Gzip | `true`             |
+| `GS_CLEANUP`   | The number of days to keep files for        | `0`                |
+| `GS_MAX_SIZE`  | The maximum file size in megabytes          | `0`                |
+| `GS_LANGUAGE`  | The language to use [available: en, uk]     | `en`               |
 
 ### Configuration file
 Ghost also supports configuration files. To use a configuration file, create a file named `cfg.json` in the same directory as the Ghost binary and add the following:
@@ -48,11 +48,11 @@ Ghost also supports configuration files. To use a configuration file, create a f
 {
     "host": "127.0.0.1",
     "port": 8080,
-    "db_path": "./ghost.db",
+    "db_path": "./ghost_files.db",
     "block_tor": false,
     "gzip": true,
-    "auto_cleanup": 7,
-    "max_size": 100,
+    "auto_cleanup": 0,
+    "max_size": 0,
     "language": "en"
 }
 ```

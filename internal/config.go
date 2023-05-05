@@ -8,14 +8,14 @@ import (
 )
 
 type Config struct {
-	Host        string
-	Port        int
-	DB_path     string
-	Block_TOR   bool
-	Gzip        bool
-	AutoCleanUp int
-	MaxSize     int
-	Language    string
+	Host     string
+	Port     int
+	DbPath   string
+	BlockTor bool
+	Gzip     bool
+	CleanUp  int
+	MaxSize  int
+	Language string
 }
 
 func loadConfig() Config {
@@ -40,7 +40,7 @@ func loadConfig() Config {
 	v.SetDefault("db_path", "ghost_files.db")
 	v.SetDefault("block_tor", false)
 	v.SetDefault("gzip", true)
-	v.SetDefault("autocleanup", 0)
+	v.SetDefault("cleanup", 0)
 	v.SetDefault("maxsize", 0)
 	v.SetDefault("language", "en")
 

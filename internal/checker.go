@@ -6,8 +6,8 @@ import (
 )
 
 func defaultCheckers() {
-	if _, err := os.Stat(config.DB_path); os.IsNotExist(err) {
-		file, err := os.Create(config.DB_path)
+	if _, err := os.Stat(config.DbPath); os.IsNotExist(err) {
+		file, err := os.Create(config.DbPath)
 		if err != nil {
 			log.Println(ts.DatabaseErrors.CreationFailed)
 			log.Fatalln(err)

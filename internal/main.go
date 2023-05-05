@@ -54,7 +54,7 @@ func runCronJob(db *gorm.DB) {
 }
 
 func main() {
-	db, err := gorm.Open(sqlite.Open(config.DB_path), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(config.DbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 
@@ -92,7 +92,7 @@ func main() {
 		return indexTmpl.Execute(c.Response(), map[string]interface{}{
 			"host":      fmt.Sprintf("%s://%s", c.Scheme(), c.Request().Host),
 			"retention": config.AutoCleanUp,
-			"tor":       config.Block_TOR,
+			"tor":       config.BlockTor,
 			"maxsize":   config.MaxSize,
 		})
 	})
