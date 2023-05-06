@@ -37,8 +37,8 @@ var banner = `
 var ts = translation(config.Language)
 
 func cleanup(db *gorm.DB) {
-	if config.AutoCleanUp != 0 {
-		db.Where("created_at < ?", time.Now().UTC().Add(-1*24*time.Duration(config.AutoCleanUp)*time.Hour)).Delete(&Data{})
+	if config.CleanUp != 0 {
+		db.Where("created_at < ?", time.Now().UTC().Add(-1*24*time.Duration(config.CleanUp)*time.Hour)).Delete(&Data{})
 	} else {
 		return
 	}
@@ -91,7 +91,7 @@ func main() {
 		c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
 		return indexTmpl.Execute(c.Response(), map[string]interface{}{
 			"host":      fmt.Sprintf("%s://%s", c.Scheme(), c.Request().Host),
-			"retention": config.AutoCleanUp,
+			"retention": config.CleanUp,
 			"tor":       config.BlockTor,
 			"maxsize":   config.MaxSize,
 		})
