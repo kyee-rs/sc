@@ -54,6 +54,8 @@ func runCronJob(db *gorm.DB) {
 }
 
 func main() {
+	defaultCheckers()
+
 	db, err := gorm.Open(sqlite.Open(config.DbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -67,8 +69,6 @@ func main() {
 		log.Println(ts.DatabaseErrors.MigrationFailed)
 		log.Fatal(err)
 	}
-
-	defaultCheckers()
 
 	runCronJob(db)
 

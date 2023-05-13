@@ -37,7 +37,7 @@ func loadConfig() Config {
 	// Set default values (in case none of the above config sources define a value for a certain key)
 	v.SetDefault("host", "127.0.0.1")
 	v.SetDefault("port", 8080)
-	v.SetDefault("db_path", "ghost_files.db")
+	v.SetDefault("dbpath", "ghost_files.db")
 	v.SetDefault("block_tor", false)
 	v.SetDefault("gzip", true)
 	v.SetDefault("cleanup", 0)
