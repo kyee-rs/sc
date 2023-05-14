@@ -38,7 +38,7 @@ var ts = translation(config.Language)
 
 func cleanup(db *gorm.DB) {
 	if config.CleanUp != 0 {
-		db.Where("created_at < ?", time.Now().UTC().Add(-1*24*time.Duration(config.CleanUp)*time.Hour)).Delete(&Data{})
+		db.Where("created_at < ?", time.Now().UTC().Add(-1*24*time.Duration(config.CleanUp)*time.Hour)).Delete(&Database{})
 	} else {
 		return
 	}
@@ -54,8 +54,6 @@ func runCronJob(db *gorm.DB) {
 }
 
 func main() {
-	defaultCheckers()
-
 	db, err := gorm.Open(sqlite.Open(config.DbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -65,11 +63,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := db.AutoMigrate(&Data{}); err != nil {
+	if err := db.AutoMigrate(&Database{}); err != nil {
 		log.Println(ts.DatabaseErrors.MigrationFailed)
 		log.Fatal(err)
 	}
 
+	defaultCheckers()
 	runCronJob(db)
 
 	e := echo.New()
@@ -104,7 +103,7 @@ func main() {
 	e.GET("/:id", func(c echo.Context) error {
 		bytes, filename, mime := getFile(c.Param("id"), db)
 		if bytes == nil {
-			return MakeError(c, http.StatusNotFound, "File not found.")
+			return Error(c, http.StatusNotFound, "File not found.")
 		}
 
 		c.Response().Header().Set("Content-Disposition", "filename=\""+filename+"\"")

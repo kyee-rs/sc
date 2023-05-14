@@ -22,7 +22,7 @@ log/*
 bin/*
 .vscode
 .devcontainer
-*files.db
+ghost_files.db
 
 # IDEA Files
 .idea

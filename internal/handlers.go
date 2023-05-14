@@ -3,21 +3,21 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
-	"errors"
+	"encoding/hex"
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
 	"io"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/gabriel-vasile/mimetype"
-	"github.com/jaevor/go-nanoid"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-// Database model.
-type Data struct {
+// Database model
+type Database struct {
 	ID        string `gorm:"primaryKey,uniqueIndex"`
 	Hash      string `gorm:"uniqueIndex"`
 	Buffer    []byte
@@ -27,9 +27,19 @@ type Data struct {
 	CreatedAt time.Time
 }
 
-// MakeError returns an error in JSON or plaintext depending on the Accept header.
-func MakeError(c echo.Context, status int, message string) error {
-	if (c.Request().Header.Get("Accept")) == "application/json" {
+func randSeq(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+	s := make([]rune, n)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(s)
+}
+
+// Error returns an error in JSON or plaintext depending on the Accept header.
+func Error(c echo.Context, status int, message string) error {
+	if c.Request().Header.Get("Accept") == "application/json" {
 		return c.JSON(status, map[string]interface{}{
 			"error":   true,
 			"status":  status,
@@ -40,9 +50,9 @@ func MakeError(c echo.Context, status int, message string) error {
 	}
 }
 
-// MakeUploadedFile returns a link to the uploaded file in JSON or plaintext depending on the Accept header.
-func MakeUploadedFile(c echo.Context, id string) error {
-	if (c.Request().Header.Get("Accept")) == "application/json" {
+// UploadedFile returns a link to the uploaded file in JSON or plaintext depending on the Accept header.
+func UploadedFile(c echo.Context, id string) error {
+	if c.Request().Header.Get("Accept") == "application/json" {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"uploaded": true,
 			"status":   http.StatusOK,
@@ -57,18 +67,12 @@ func MakeUploadedFile(c echo.Context, id string) error {
 func upload(c echo.Context, db *gorm.DB) error {
 	file, err := c.FormFile("file")
 	if err != nil {
-		return MakeError(c, http.StatusBadRequest, ts.HTTPErrors.BadRequest)
-	}
-
-	generator, err := nanoid.ASCII(5)
-
-	if err != nil {
-		panic(err)
+		return Error(c, http.StatusBadRequest, ts.HTTPErrors.BadRequest)
 	}
 
 	if config.MaxSize > 0 {
 		if file.Size > (int64(config.MaxSize) * 1024 * 1024) {
-			return MakeError(c, http.StatusRequestEntityTooLarge, ts.HTTPErrors.FileTooLarge)
+			return Error(c, http.StatusRequestEntityTooLarge, ts.HTTPErrors.FileTooLarge)
 		}
 	}
 
@@ -84,45 +88,52 @@ func upload(c echo.Context, db *gorm.DB) error {
 		return buf.Bytes()
 	}()
 
+	HashBytes := sha256.Sum256(buffer)
+	hash := hex.EncodeToString(HashBytes[:])
+
 	// Check if the file is already in the database by comparing the SHA256 hash
 	// of the file with the ones in the database.
-	var hashChecker Data
+	var hashChecker Database
 	db.Where("hash = ?", fmt.Sprintf("%x", sha256.Sum256(buffer))).First(&hashChecker)
 	if hashChecker.ID != "" {
-		MakeUploadedFile(c, hashChecker.ID)
+		return UploadedFile(c, hashChecker.ID)
 	}
 
-	mimes := mimetype.Detect(buffer)
-	ext := ".bin"
-
+	var mimes = mimetype.Detect(buffer)
+	var ext = ".bin"
+	var contentType = mimes.String()
 	if mimes.Extension() != "" {
 		ext = mimes.Extension()
 	}
 
-	id := generator() + ext
+	if c.Request().Header.Get("Parse_HTML") == "yes" && strings.HasPrefix(contentType, "text/plain") {
+		contentType = "text/html; charset=utf-8"
+		ext = ".html"
+	}
+
+	id := randSeq(5) + ext
 	for {
 		var count int64
-		err := db.Model(&Data{}).Where("id = ?", id).Count(&count).Error
-
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		db.Model(&Database{}).Where("id = ?", id).Count(&count)
+		if count == 0 {
 			break
 		}
-
-		id = generator() + ext
+		id = randSeq(5) + ext
 	}
-	data := Data{
+
+	data := Database{
 		ID:        id,
 		Name:      file.Filename,
 		Buffer:    buffer,
-		Hash:      fmt.Sprintf("%x", sha256.Sum256(buffer)),
+		Hash:      hash,
 		Size:      file.Size,
-		Mime:      mimes.String(),
+		Mime:      contentType,
 		CreatedAt: time.Now().UTC(),
 	}
 
 	db.Create(&data)
 
-	return MakeUploadedFile(c, id)
+	return UploadedFile(c, id)
 }
 
 // Gets the file using the provided UUID on the URL
@@ -133,7 +144,7 @@ func getFile(uuid string, db *gorm.DB) ([]byte, string, string) {
 
 	uuid = strings.TrimSpace(uuid)
 
-	var data Data
+	var data Database
 	db.Where("ID = ?", uuid).First(&data)
 
 	if len(data.ID) <= 0 {

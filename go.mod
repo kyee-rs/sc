@@ -6,9 +6,9 @@ require (
 	github.com/fatih/color v1.14.1
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-co-op/gocron v1.18.1
-	github.com/jaevor/go-nanoid v1.3.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/prophittcorey/tor v1.0.0
+	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/viper v1.14.0
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.3
