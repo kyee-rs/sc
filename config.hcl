@@ -3,7 +3,7 @@
 # 08.08.2023 - @voxelin                                                                            #
 ####################################################################################################
 
-server "app_name" "server_name" {                                           # Set `app_name` and `server_name` to your desired values. Has no performance or runtime difference.
+server "Simple Cache - @voxelin" "Simple Cache - @voxelin" {                                           # Set `app_name` and `server_name` to your desired values. Has no performance or runtime difference.
   port = 8080                                                               # Port
   database_url = "postgres://user:password@localhost:5432/db"               # TimescaleDB Connection URL
   seed = 3719                                                               # Seed for ID generation [type: random number > 0]
