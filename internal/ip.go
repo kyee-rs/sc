@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/prophittcorey/tor"
-	"net/http"
 )
 
 func isTorExitNode(address string) bool {

@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
-	"github.com/gofiber/fiber/v2"
+	"fmt"
 	"os"
-	"strconv"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
@@ -52,14 +53,14 @@ func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: config.Logger.ForceColors, FullTimestamp: config.Logger.FullTimestamp, TimestampFormat: time.RFC822})
 	log.SetOutput(os.Stdout)
 
-	dbInternal, err := sql.Open("postgres", config.DatabaseURL)
+	dbInternal, err := sql.Open("postgres", config.Server.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to open a TimescaleDB Connection: %v", err)
 	}
 
 	db = timescale.New(dbInternal)
 
-	genSid, err := shortid.New(1, shortid.DefaultABC, config.Seed)
+	genSid, err := shortid.New(1, shortid.DefaultABC, config.Server.Seed)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function": "init(shortid.New)",
@@ -73,8 +74,12 @@ func init() {
 
 func main() {
 	app := fiber.New(fiber.Config{
-		JSONEncoder: sonic.Marshal,
-		JSONDecoder: sonic.Unmarshal,
+		JSONEncoder:  sonic.Marshal,
+		JSONDecoder:  sonic.Unmarshal,
+		ServerHeader: config.Server.ServerName,
+		AppName:      config.Server.AppName,
+		Prefork:      true,
+		BodyLimit:    config.Limits.MaxSize * 1024 * 1024,
 	})
 
 	app.Use(
@@ -95,5 +100,5 @@ func main() {
 
 	app.Get("/:id", loadResponse)
 
-	log.Fatal(app.Listen(":" + strconv.FormatInt(config.Port, 10)))
+	log.Fatal(app.Listen(fmt.Sprintf(":%d", config.Server.Port)))
 }

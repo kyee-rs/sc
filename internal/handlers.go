@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"io"
+	"net/http"
+
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofiber/fiber/v2"
 	timescale "github.com/voxelin/ghost/sqlc_gen"
-	"io"
-	"net/http"
 )
 
 // upload a file, save, and attribute an ID to it.
@@ -16,12 +17,6 @@ func upload(c *fiber.Ctx) error {
 	formFile, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Segmentation Fault")
-	}
-
-	if config.Limits.MaxSize > 0 {
-		if formFile.Size > (int64(config.Limits.MaxSize) * 1024 * 1024) {
-			return c.Status(http.StatusBadRequest).SendString("Segmentation Fault")
-		}
 	}
 
 	buffer := func() []byte {
@@ -76,7 +71,6 @@ func upload(c *fiber.Ctx) error {
 // loadResponse - Loads a File Response
 func loadResponse(c *fiber.Ctx) error {
 	data, err := db.GetFile(ctx, c.Params("id"))
-
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Segmentation Fault")
 	}
