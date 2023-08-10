@@ -9,7 +9,7 @@ import (
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofiber/fiber/v2"
-	timescale "github.com/voxelin/ghost/sqlc_gen"
+	timescale "github.com/voxelin/sc/sqlc_gen"
 )
 
 // upload a file, save, and attribute an ID to it.

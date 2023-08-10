@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	log "github.com/sirupsen/logrus"
-	timescale "github.com/voxelin/ghost/sqlc_gen"
+	timescale "github.com/voxelin/sc/sqlc_gen"
 
 	_ "embed"
 	"github.com/bytedance/sonic"
