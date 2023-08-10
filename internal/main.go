@@ -1,116 +1,99 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"log"
-	"net/http"
+	"context"
+	"database/sql"
+	"github.com/gofiber/fiber/v2"
+	"os"
+	"strconv"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/hashicorp/hcl/v2/hclsimple"
+	log "github.com/sirupsen/logrus"
+	timescale "github.com/voxelin/ghost/sqlc_gen"
 
 	_ "embed"
-
-	"github.com/fatih/color"
+	"github.com/bytedance/sonic"
 	cron "github.com/go-co-op/gocron"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	_ "github.com/lib/pq"
+	"github.com/teris-io/shortid"
 )
 
-//go:embed html/index.html
-var index []byte
+var (
+	ctx    = context.Background()
+	sid    *shortid.Shortid
+	db     *timescale.Queries
+	config configuration
+)
 
-var indexTmpl = template.Must(template.New("index").Parse(string(index)))
-
-var config = loadConfig()
-var banner = `
-   ________               __     _____                          
-  / ____/ /_  ____  _____/ /_   / ___/___  ______   _____  _____
- / / __/ __ \/ __ \/ ___/ __/   \__ \/ _ \/ ___/ | / / _ \/ ___/
-/ /_/ / / / / /_/ (__  ) /_    ___/ /  __/ /   | |/ /  __/ /    
-\____/_/ /_/\____/____/\__/   /____/\___/_/    |___/\___/_/ 
-
-`
-
-var ts = translation(config.Language)
-
-func cleanup(db *gorm.DB) {
-	if config.CleanUp != 0 {
-		db.Where("created_at < ?", time.Now().UTC().Add(-1*24*time.Duration(config.CleanUp)*time.Hour)).Delete(&Database{})
-	} else {
-		return
+func cleanup(db *timescale.Queries) {
+	if err := db.PurgeFiles(ctx); err != nil {
+		log.Fatalln("Failed to execute cleanup")
 	}
 }
 
-func runCronJob(db *gorm.DB) {
+func runCronJob(db *timescale.Queries) {
 	s := cron.NewScheduler(time.UTC)
-	if _, err := s.Every(1).Minute().Do(cleanup, db); err != nil {
-		log.Println(ts.CronJobErrors.FailedToStart)
+	if _, err := s.Every(12).Hours().Do(cleanup, db); err != nil {
+		log.Println("Failed to run a CronJob Task.")
 		log.Fatal(err)
 	}
 	s.StartAsync()
 }
 
+func init() {
+	err := hclsimple.DecodeFile("config.hcl", nil, &config)
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %s", err)
+	}
+
+	log.SetFormatter(&log.TextFormatter{ForceColors: config.Logger.ForceColors, FullTimestamp: config.Logger.FullTimestamp, TimestampFormat: time.RFC822})
+	log.SetOutput(os.Stdout)
+
+	dbInternal, err := sql.Open("postgres", config.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to open a TimescaleDB Connection: %v", err)
+	}
+
+	db = timescale.New(dbInternal)
+
+	genSid, err := shortid.New(1, shortid.DefaultABC, config.Seed)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "init(shortid.New)",
+		}).Fatal(err)
+	}
+
+	sid = genSid
+
+	runCronJob(db)
+}
+
 func main() {
-	db, err := gorm.Open(sqlite.Open(config.DbPath), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+	app := fiber.New(fiber.Config{
+		JSONEncoder: sonic.Marshal,
+		JSONDecoder: sonic.Unmarshal,
 	})
 
-	if err != nil {
-		log.Println(ts.DatabaseErrors.ConnectionFailed)
-		log.Fatal(err)
-	}
-
-	if err := db.AutoMigrate(&Database{}); err != nil {
-		log.Println(ts.DatabaseErrors.MigrationFailed)
-		log.Fatal(err)
-	}
-
-	defaultCheckers()
-	runCronJob(db)
-
-	e := echo.New()
-
-	e.HideBanner = true
-	color.Cyan(banner)
-
-	e.Use(
-		middleware.Recover(),
-		ipMiddleware(),
-		middleware.LoggerWithConfig(middleware.LoggerConfig{
-			Format: "${method} - ${uri} - ${status} - ${latency_human}\n",
-			Output: e.Logger.Output(),
-		}),
-		middleware.Gzip(),
+	app.Use(
+		compress.New(
+			compress.Config{
+				Level: compress.LevelBestSpeed,
+			},
+		),
+		favicon.New(),
+		torMiddleware(),
 	)
 
-	e.GET("/", func(c echo.Context) error {
-		c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
-		return indexTmpl.Execute(c.Response(), map[string]interface{}{
-			"host":      fmt.Sprintf("%s://%s", c.Scheme(), c.Request().Host),
-			"retention": config.CleanUp,
-			"tor":       config.BlockTor,
-			"maxsize":   config.MaxSize,
-		})
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendStatus(403)
 	})
 
-	e.POST("/", func(c echo.Context) error {
-		return upload(c, db)
-	})
+	app.Post("/", upload)
 
-	e.GET("/:id", func(c echo.Context) error {
-		bytes, filename, mime := getFile(c.Param("id"), db)
-		if bytes == nil {
-			return Error(c, http.StatusNotFound, "File not found.")
-		}
+	app.Get("/:id", loadResponse)
 
-		c.Response().Header().Set("Content-Disposition", "filename=\""+filename+"\"")
-		c.Response().Header().Set("Content-Type", mime)
-
-		return c.Blob(http.StatusOK, mime, bytes)
-	})
-
-	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", config.Host, config.Port)))
+	log.Fatal(app.Listen(":" + strconv.FormatInt(config.Port, 10)))
 }
