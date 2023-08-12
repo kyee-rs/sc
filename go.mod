@@ -1,6 +1,6 @@
 module github.com/voxelin/ghost
 
-go 1.19
+go 1.20
 
 require (
 	github.com/bytedance/sonic v1.10.0
