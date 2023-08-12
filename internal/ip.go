@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"slices"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/prophittcorey/tor"

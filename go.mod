@@ -7,10 +7,16 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-co-op/gocron v1.18.1
 	github.com/gofiber/fiber/v2 v2.48.0
+	github.com/knadh/koanf/parsers/hcl v0.1.0
+	github.com/knadh/koanf/providers/confmap v0.1.0
+	github.com/knadh/koanf/providers/env v0.1.0
+	github.com/knadh/koanf/providers/file v0.1.0
+	github.com/knadh/koanf/v2 v2.0.1
 	github.com/lib/pq v1.10.9
 	github.com/prophittcorey/tor v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
+	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
 )
 
 require (
@@ -23,12 +29,6 @@ require (
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
-	github.com/knadh/koanf/parsers/hcl v0.1.0 // indirect
-	github.com/knadh/koanf/providers/confmap v0.1.0 // indirect
-	github.com/knadh/koanf/providers/env v0.1.0 // indirect
-	github.com/knadh/koanf/providers/file v0.1.0 // indirect
-	github.com/knadh/koanf/providers/rawbytes v0.1.0 // indirect
-	github.com/knadh/koanf/v2 v2.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
