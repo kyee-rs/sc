@@ -1,61 +1,66 @@
 package main
 
 import (
-	"log"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/parsers/hcl"
+	"github.com/knadh/koanf/providers/confmap"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
+	log "github.com/sirupsen/logrus"
 )
 
-type Config struct {
-	Host     string
-	Port     int
-	DbPath   string
-	BlockTor bool
-	Gzip     bool
-	CleanUp  int
-	MaxSize  int
-	Language string
+type Configuration struct {
+	Server serverSettings      `koanf:"server"`
+	Logger loggerSettings      `koanf:"logger"`
+	Limits limitationsSettings `koanf:"limits"`
 }
 
-func loadConfig() Config {
-	v := viper.New()
+type serverSettings struct {
+	ServerName  string `koanf:"serverName"`
+	AppName     string `koanf:"appName"`
+	Port        int    `koanf:"port"`
+	DatabaseURL string `koanf:"databaseUrl"`
+	Seed        uint64 `koanf:"seed"`
+}
 
-	// Configure file loading
-	v.AddConfigPath(".")
-	v.AddConfigPath("cfg")
-	v.AddConfigPath("ghost")
-	v.AddConfigPath("/etc/ghost/")
-	v.SetConfigName("cfg")
+type limitationsSettings struct {
+	MaxSize     int      `koanf:"maxSize"`
+	BlockTor    bool     `koanf:"blockTor"`
+	IpBlacklist []string `koanf:"ipBlacklist"`
+}
 
-	// Configure environment variables
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace dashes and dots in env var names with underscores
-	v.SetEnvPrefix("GS")                                         // Look for environment variables prefixed with GS_
-	v.AutomaticEnv()                                             // Look for env vars for config keys
-	v.AllowEmptyEnv(false)                                       // Consider defined environment variables with empty values
+type loggerSettings struct {
+	ForceColors   bool `koanf:"forceColors"`
+	FullTimestamp bool `koanf:"fullTimestamp"`
+}
 
-	// Set default values (in case none of the above config sources define a value for a certain key)
-	v.SetDefault("host", "127.0.0.1")
-	v.SetDefault("port", 8080)
-	v.SetDefault("dbpath", "ghost_files.db")
-	v.SetDefault("block_tor", false)
-	v.SetDefault("gzip", true)
-	v.SetDefault("cleanup", 0)
-	v.SetDefault("maxsize", 0)
-	v.SetDefault("language", "en")
+var k = koanf.New(".")
 
-	// Read and parse a config file
-	// Ignore if error is File Not Found. Any other error is fatal.
-	err := v.ReadInConfig()
-	if _, configFileNotFound := err.(viper.ConfigFileNotFoundError); err != nil && !configFileNotFound {
-		log.Fatalln(err)
+func (c *Configuration) load() {
+	k.Load(confmap.Provider(map[string]interface{}{ //nolint:errcheck
+		"server.serverName":    "Simple Cache v1.2.4",
+		"server.appName":       "Simple Cache",
+		"server.port":          8080,
+		"server.databaseURL":   "postgres://user:password@localhost:5432/db",
+		"server.seed":          "3719",
+		"logger.forceColors":   false,
+		"logger.fullTimestamp": true,
+		"limits.maxSize":       10,
+		"limits.blockTor":      false,
+	}, "."), nil)
+
+	k.Load(file.Provider("./config.hcl"), hcl.Parser(true)) //nolint:errcheck
+
+	k.Load(env.Provider("SC_", ".", func(s string) string { //nolint:errcheck
+		return strings.Replace(strings.ToLower(
+			strings.TrimPrefix(s, "SC_")), "_", ".", -1)
+	}), nil)
+
+	if err := k.Unmarshal("", &c); err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalln("Failed to unmarshal the configuration.")
 	}
-
-	var config Config
-
-	if err := v.Unmarshal(&config); err != nil {
-		log.Fatalln(err)
-	}
-
-	return config
 }

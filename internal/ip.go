@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"slices"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 	"github.com/prophittcorey/tor"
 )
 
@@ -20,13 +21,22 @@ func isTorExitNode(address string) bool {
 	return false
 }
 
-func ipMiddleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			if isTorExitNode(c.RealIP()) {
-				return Error(c, http.StatusForbidden, ts.HTTPErrors.TorNotAllowed)
-			}
-			return next(c)
+func torMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if isTorExitNode(c.IP()) {
+			return c.SendStatus(http.StatusForbidden)
 		}
+
+		return c.Next()
+	}
+}
+
+func ipMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if slices.Contains(config.Limits.IpBlacklist, c.IP()) {
+			return c.SendStatus(http.StatusForbidden)
+		}
+
+		return c.Next()
 	}
 }
