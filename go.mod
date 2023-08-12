@@ -17,6 +17,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 	github.com/voxelin/sc v0.0.0-20230812174049-ab6810681120
+	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
 )
 
 require (
