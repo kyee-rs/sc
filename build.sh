@@ -1,0 +1,1 @@
+pack build --buildpack paketo-buildpacks/go --env "CGO_ENABLED=0" --env "BP_GO_BUILD_FLAGS=-buildmode=default" --env BP_GO_TARGETS="./internal:./sqlc_gen" voxelin/sc

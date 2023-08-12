@@ -22,7 +22,8 @@ log/*
 bin/*
 .vscode
 .devcontainer
-ghost_files.db
+build.sh
+config.hcl
 
 # IDEA Files
 .idea

@@ -4,38 +4,65 @@
 > WARNING: This branch is used specially to integrate with TimescaleDB.
 > If you have regular postgresql, mysql, sqlite database, please refer to origin/main.
 
-# Introduction
------------------
+## Introduction
+----------------------------------
 Simple Cache is a service for minimalistic temporary (or not?) file hosting.
 SC allows you to upload any file via `curl`, `httpie` or any other HTTP Client,
 and store it for configured number of days (or forever).
 
-# Routes
------------------
+## Routes
+----------------------------------
 * GET `/` - Returns 403 status code
 * POST `/` - Uploads a file from multipart/form-data (Field: `file` or `url`)
 * GET `/:id` - Loads a file preview in browser if possible. If not, downloads the file.
 
-# Configuration
------------------
-The configuration is done via `config.hcl` file. Hashicorp Configuration Language is used.
+## Configuration
+----------------------------------
+The configuration can be done either via the file or the environment variables. The priority of loading is following:
 
-Example config:
-```
-server "app_name" "server_name" {                                           # Set `app_name` and `server_name` to your desired values. Has no performance or runtime difference.
-  port = 8080                                                               # Port
-  database_url = "postgres://user:password@localhost:5432/db"               # TimescaleDB Connection URL
-  seed = 3719                                                               # Seed for ID generation [type: random number > 0]
+| LOAD DEFAULT VALUES | ---> | LOAD CONFIG.HCL | ---> | LOAD ENVIRONMENT VARIABLES |
+
+If some keys exist in multiple places (e.g. server.port in `config.hcl` and SC_SERVER_PORT is given) then the latest load is prioritized. (Environment variables are superior)
+
+### `config.hcl`
+
+Example `config.hcl`:
+------------------------------------------------------------------------
+server {
+  serverName = "Simple Cache v1.2.4"                                         # Sets the `Server` header for each response
+  appName = "Simple Cache"                                                   # Sets the app name to display in terminal
+  port = 8080                                                                # Server port
+  databaseUrl = "postgres://user:password@localhost:5432/timescaledb"        # TimescaleDB Connection URL
+  seed = 3719                                                                # Seed for ID generation [type: random number > 0]
 }
 
 logger {
-  force_colors = false                                                    # Force colored output
-  full_timestamp = true
+  forceColors = false                                                        # Force colored output
+  fullTimestamp = true
 }
 
 limits {
-  max_size = 10                                                           # Max file size in MB
-  block_tor = true                                                        # Block TOR exit nodes
-  ip_blacklist = []                                                       # ["168.0.2.3", "1.2.3.4"...]
+  maxSize = 10                                                               # Max uploaded body size in MB
+  blockTor = false                                                           # Block TOR exit nodes
+  ipBlacklist = []                                                           # ["168.0.2.3", "1.2.3.4"...]
 }
-```
+------------------------------------------------------------------------
+
+### Environment Variables
+
+Configuration alternatively can be done through the environment variables. See the table below.
+
+┌─────────────────────────┬─────────────────────────────┬───────────────────────────────────────────────────────┬──────────────────────────────────────────────────┐
+│       Environment       │ Alternative in `config.hcl` │                     Default Value                     │                   Description                    │
+├─────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────┼──────────────────────────────────────────────────┤
+│ SC_SERVER_SERVERNAME    │ server.serverName           │ "Simple Cache v1.2.4"                                 │ `Server` header for each response                │
+│ SC_SERVER_APPNAME       │ server.appName              │ "Simple Cache"                                        │ App name to display in the terminal              │
+│ SC_SERVER_PORT          │ server.port                 │ 8080                                                  │ Server port                                      │
+│ SC_SERVER_DATABASEURL   │ server.databaseURL          │ "postgres://user:password@localhost:5432/timescaledb" │ TimescaleDB Connection URL                       │
+│ SC_SERVER_SEED          │ server.seed                 │ 3719                                                  │ Seed for ID generation [type: random number > 0] │
+│ SC_LOGGER_FORCECOLORS   │ logger.forceColors          │ false                                                 │ Force colored output                             │
+│ SC_LOGGER_FULLTIMESTAMP │ logger.fullTimestamp        │ true                                                  │ -                                                │
+│ SC_LIMITS_MAXSIZE       │ limits.maxSize              │ 10                                                    │ Max uploaded body size in MB                     │
+│ SC_LIMITS_BLOCKTOR      │ limits.blockTor             │ false                                                 │ Block TOR exit nodes                             │
+└─────────────────────────┴─────────────────────────────┴───────────────────────────────────────────────────────┴──────────────────────────────────────────────────┘
+

@@ -11,11 +11,11 @@ import (
 
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
-	"github.com/hashicorp/hcl/v2/hclsimple"
 	log "github.com/sirupsen/logrus"
 	timescale "github.com/voxelin/sc/sqlc_gen"
 
 	_ "embed"
+
 	"github.com/bytedance/sonic"
 	cron "github.com/go-co-op/gocron"
 	_ "github.com/lib/pq"
@@ -26,32 +26,31 @@ var (
 	ctx    = context.Background()
 	sid    *shortid.Shortid
 	db     *timescale.Queries
-	config configuration
+	config Configuration
 )
 
-func cleanup(db *timescale.Queries) {
+func cleanup() {
 	if err := db.PurgeFiles(ctx); err != nil {
 		log.Fatalln("Failed to execute cleanup")
 	}
 }
 
-func runCronJob(db *timescale.Queries) {
+func runCronJob() {
 	s := cron.NewScheduler(time.UTC)
-	if _, err := s.Every(12).Hours().Do(cleanup, db); err != nil {
+	if _, err := s.Every(12).Hours().Do(cleanup); err != nil {
 		log.Println("Failed to run a CronJob Task.")
 		log.Fatal(err)
 	}
 	s.StartAsync()
 }
 
-func init() {
-	err := hclsimple.DecodeFile("config.hcl", nil, &config)
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %s", err)
-	}
+func main() {
+	config.load()
 
 	log.SetFormatter(&log.TextFormatter{ForceColors: config.Logger.ForceColors, FullTimestamp: config.Logger.FullTimestamp, TimestampFormat: time.RFC822})
 	log.SetOutput(os.Stdout)
+
+	log.Println(config)
 
 	dbInternal, err := sql.Open("postgres", config.Server.DatabaseURL)
 	if err != nil {
@@ -69,10 +68,10 @@ func init() {
 
 	sid = genSid
 
-	runCronJob(db)
-}
+	if !fiber.IsChild() {
+		runCronJob()
+	}
 
-func main() {
 	app := fiber.New(fiber.Config{
 		JSONEncoder:  sonic.Marshal,
 		JSONDecoder:  sonic.Unmarshal,
@@ -89,8 +88,14 @@ func main() {
 			},
 		),
 		favicon.New(),
-		torMiddleware(),
 	)
+
+	if config.Limits.BlockTor {
+		app.Use(torMiddleware())
+	}
+	if len(config.Limits.IpBlacklist) > 0 {
+		app.Use(ipMiddleware())
+	}
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(403)
