@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -67,17 +68,13 @@ func main() {
 	}
 
 	sid = genSid
-
-	if !fiber.IsChild() {
-		runCronJob()
-	}
+	runCronJob()
 
 	app := fiber.New(fiber.Config{
 		JSONEncoder:  sonic.Marshal,
 		JSONDecoder:  sonic.Unmarshal,
 		ServerHeader: config.Server.ServerName,
 		AppName:      config.Server.AppName,
-		Prefork:      true,
 		BodyLimit:    config.Limits.MaxSize * 1024 * 1024,
 	})
 
@@ -105,5 +102,17 @@ func main() {
 
 	app.Get("/:id", loadResponse)
 
-	log.Fatal(app.Listen(fmt.Sprintf(":%d", config.Server.Port)))
+	port := func() int {
+		if len(os.Getenv("PORT")) == 0 {
+			return config.Server.Port
+		} else {
+			num, err := strconv.Atoi(os.Getenv("PORT"))
+			if err != nil {
+				return 0
+			}
+
+			return num
+		}
+	}()
+	log.Fatal(app.Listen(fmt.Sprintf(":%d", port)))
 }

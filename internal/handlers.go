@@ -75,5 +75,8 @@ func loadResponse(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).SendString("Segmentation Fault")
 	}
 
+	c.Response().Header.Set("Content-Disposition", "filename=\""+data.Name+"\"")
+	c.Response().Header.Set("Content-Type", data.Mime)
+
 	return c.Send(data.Buffer)
 }
