@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -102,5 +103,18 @@ func main() {
 
 	app.Get("/:id", loadResponse)
 
-	log.Fatal(app.Listen(fmt.Sprintf(":%d", config.Server.Port)))
+	port := func() int {
+		if len(os.Getenv("PORT")) == 0 {
+			return config.Server.Port
+		} else {
+			num, err := strconv.Atoi(os.Getenv("PORT"))
+			if err != nil {
+				return 0
+			}
+
+			return num
+		}
+	}()
+
+	log.Fatal(app.Listen(fmt.Sprintf(":%d", port)))
 }
