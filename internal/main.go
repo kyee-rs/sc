@@ -50,8 +50,6 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: config.Logger.ForceColors, FullTimestamp: config.Logger.FullTimestamp, TimestampFormat: time.RFC822})
 	log.SetOutput(os.Stdout)
 
-	log.Println(config)
-
 	dbInternal, err := sql.Open("postgres", config.Server.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to open a TimescaleDB Connection: %v", err)
@@ -77,7 +75,6 @@ func main() {
 		JSONDecoder:  sonic.Unmarshal,
 		ServerHeader: config.Server.ServerName,
 		AppName:      config.Server.AppName,
-		Prefork:      true,
 		BodyLimit:    config.Limits.MaxSize * 1024 * 1024,
 	})
 
