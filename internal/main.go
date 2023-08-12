@@ -32,15 +32,18 @@ var (
 
 func cleanup() {
 	if err := db.PurgeFiles(ctx); err != nil {
-		log.Fatalln("failed to execute the cleaning task")
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalln("failed to execute the cleaning task")
 	}
 }
 
 func runCronJob() {
 	s := cron.NewScheduler(time.UTC)
 	if _, err := s.Every(12).Hours().Do(cleanup); err != nil {
-		log.Println("failed to register the cronjob task")
-		log.Fatal(err)
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalln("failed to register the cronjob task")
 	}
 	s.StartAsync()
 }
