@@ -51,8 +51,6 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: config.Logger.ForceColors, FullTimestamp: config.Logger.FullTimestamp, TimestampFormat: time.RFC822})
 	log.SetOutput(os.Stdout)
 
-	log.Println(config)
-
 	dbInternal, err := sql.Open("postgres", config.Server.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to open a TimescaleDB Connection: %v", err)
