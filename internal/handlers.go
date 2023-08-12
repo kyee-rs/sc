@@ -14,11 +14,12 @@ import (
 
 // upload a file, save, and attribute an ID to it.
 func upload(c *fiber.Ctx) error {
+	_, _ = c.Request().MultipartForm()
+
 	formFile, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Segmentation Fault")
 	}
-
 	buffer := func() []byte {
 		f, err := formFile.Open()
 		if err != nil {
