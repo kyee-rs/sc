@@ -31,14 +31,14 @@ var (
 
 func cleanup() {
 	if err := db.PurgeFiles(ctx); err != nil {
-		log.Fatalln("Failed to execute cleanup")
+		log.Fatalln("failed to execute the cleaning task")
 	}
 }
 
 func runCronJob() {
 	s := cron.NewScheduler(time.UTC)
 	if _, err := s.Every(12).Hours().Do(cleanup); err != nil {
-		log.Println("Failed to run a CronJob Task.")
+		log.Println("failed to register the cronjob task")
 		log.Fatal(err)
 	}
 	s.StartAsync()

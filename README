@@ -2,27 +2,27 @@
 ============================== Made by @voxelin ==============================
 
 > WARNING: This branch is used specially to integrate with TimescaleDB.
-> If you have regular postgresql, mysql, sqlite database, please refer to origin/main.
+> If you have regular postgresql database, please refer to origin/main.
 
 ## Introduction
 ----------------------------------
 Simple Cache is a service for minimalistic temporary (or not?) file hosting.
-SC allows you to upload any file via `curl`, `httpie` or any other HTTP Client,
-and store it for configured number of days (or forever).
+SC allows you to upload any file via `curl`, `httpie`, or any other HTTP client
+and store it for a specified number of days (or forever).
 
 ## Routes
 ----------------------------------
-* GET `/` - Returns 403 status code
-* POST `/` - Uploads a file from multipart/form-data (Field: `file` or `url`)
-* GET `/:id` - Loads a file preview in browser if possible. If not, downloads the file.
+* GET `/` - Returns a 403 status code.
+* POST `/` - Uploads a file from multipart/form-data (Field: `file` or `url`).
+* GET `/:id` - Loads a file preview in the browser if possible. If not, download the file.
 
 ## Configuration
 ----------------------------------
-The configuration can be done either via the file or the environment variables. The priority of loading is following:
+The configuration can be done either via the file or the environment variables. The priority of loading is as follows:
 
 | LOAD DEFAULT VALUES | ---> | LOAD CONFIG.HCL | ---> | LOAD ENVIRONMENT VARIABLES |
 
-If some keys exist in multiple places (e.g. server.port in `config.hcl` and SC_SERVER_PORT is given) then the latest load is prioritized. (Environment variables are superior)
+If some keys exist in multiple places (e.g., server.port in `config.hcl` and SC_SERVER_PORT is given), then the latest load is prioritized. (Environment variables are superior.)
 
 ### `config.hcl`
 
@@ -50,7 +50,7 @@ limits {
 
 ### Environment Variables
 
-Configuration alternatively can be done through the environment variables. See the table below.
+Configuration can also be done through environment variables. See the table below.
 
 |       Environment       | Alternative in `config.hcl` |     Default Value     |                Description                 |
 |-------------------------|-----------------------------|-----------------------|--------------------------------------------|

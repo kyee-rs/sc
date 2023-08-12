@@ -4,8 +4,8 @@
 ####################################################################################################
 
 server {
-  serverName = "Simple Cache v1.2.4"                                         # Sets the `Server` header for each response
-  appName = "Simple Cache"                                                   # Sets the app name to display in terminal
+  serverName = "Simple Cache v1.2.4"                                         # Sets the `Server` header for each response.
+  appName = "Simple Cache"                                                   # Sets the app name to display in the terminal.
   port = 8080                                                                # Server port
   databaseUrl = "postgres://user:password@localhost:5432/timescaledb"        # TimescaleDB Connection URL
   seed = 3719                                                                # Seed for ID generation [type: random number > 0]
