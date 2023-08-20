@@ -49,14 +49,14 @@ limits {
 ### Environment Variables
 Configuration can also be done through environment variables. See the table below.
 
-| Environment             | Default Value         | Description                                |
-|-------------------------|-----------------------|--------------------------------------------|
-| SC_SERVER_SERVERNAME    | "Simple Cache v1.2.4" | `Server` header for each response          |
-| SC_SERVER_APPNAME       | "Simple Cache"        | App name to display in the terminal        |
-| SC_SERVER_PORT          | 8080                  | Server port                                |
-| SC_SERVER_DATABASEURL   | [placeholder]         | TimescaleDB Connection URL                 |
-| SC_SERVER_SEED          | 3719                  | Seed for ID generation [random number > 0] |
-| SC_LOGGER_FORCECOLORS   | false                 | Force colored output                       |
-| SC_LOGGER_FULLTIMESTAMP | true                  | -                                          |
-| SC_LIMITS_MAXSIZE       | 10                    | Max uploaded body size in MB               |
-| SC_LIMITS_BLOCKTOR      | false                 | Block TOR exit nodes                       |
+| Environment               | Default Value           | Description                                |
+|---------------------------|-------------------------|--------------------------------------------|
+| `SC_SERVER_SERVERNAME`    | `"Simple Cache v1.2.4"` | `Server` header for each response          |
+| `SC_SERVER_APPNAME`       | `"Simple Cache"`        | App name to display in the terminal        |
+| `SC_SERVER_PORT`          | `8080`                  | Server port                                |
+| `SC_SERVER_DATABASEURL`   | -                       | TimescaleDB Connection URL                 |
+| `SC_SERVER_SEED`          | `3719`                  | Seed for ID generation [random number > 0] |
+| `SC_LOGGER_FORCECOLORS`   | `false`                 | Force colored output                       |
+| `SC_LOGGER_FULLTIMESTAMP` | `true`                  | -                                          |
+| `SC_LIMITS_MAXSIZE`       | `10`                    | Max uploaded body size in MB               |
+| `SC_LIMITS_BLOCKTOR`      | `false`                 | Block TOR exit nodes                       |
